@@ -11,7 +11,7 @@ cbrrate = 3000000
 
 
 #用户参数
-user_number = 25 #                          用户状态
+user_number = 20 #                          用户状态
 user_info_len = 16#                         用户状态长度                          
 Gain_user = 30 #dBi                         用户接收增益
 movespeed = 1000 #m/s                        用户移动速度
