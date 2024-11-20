@@ -1,0 +1,39 @@
+lat_long_user: [7.64204962 0.74357147 0.        ]
+maxdistance: 240000
+lat_long_areacenter: [ 6.33511333e+06 -1.80537946e-10  7.42062665e+05]
+throughput: 0.0
+request: 0
+ontime: 0
+offtime_restore: 2
+offtime: 1.607394506024196
+traffictype: {'text': 2.0, 'voice': 4.0, 'video': 8}
+qci_type: {'None': 0, 'text': 1, 'voice': 2, 'video': 3}
+qci: 0
+waiting_data_finally: 0
+waitingbit: 0
+cbrrate: 1587383
+transmit_rate_one_channal: 10
+newarrivaldata: 0
+current_txdata: 0
+total_txdata: 0
+type: None
+number_of_rbg_nedded: 0
+max_number_of_rbg: 12
+current_waiting_data: 0
+index: 1
+average_throughput: 0.0
+capacity: 0
+movespeed: 150
+earth_radius: 6371000
+earth_semimajor_axis: 6378137
+earth_grs80_eccentricity: 0.0818191910428158
+earth_wgs84_eccentricity: 0.0818191908426215
+earthspheroidtype: {'sphere': 0, 'grs80': 1, 'wgs84': 2}
+areauser_position_xyz: [6321329.58818738   82041.36973196  848239.18404901]
+movedistance: 0
+randomangle: [-0.00128384 -0.00101153  0.        ]
+time_delay: 0
+height: 35786000
+angle_user: 0
+beam_id: 18
+num_user: 0
