@@ -13,7 +13,7 @@ def get_paper_reward_info(extra,MAX_DOWN_Rate):
     Sate_step_Qos, Sate_step_new, Sate_step_wait, Sate_step_downtx, Sate_step_downthroughput,  = 0, 0, 0, 0, 0
     Bs_step_Qos, Bs_step_new, Bs_step_wait, Bs_step_downtx, Bs_step_downthroughput = 0, 0, 0, 0, 0
     sate_extra = extra['Sate_User']
-    bs_extra = extra['Bs_user']
+    bs_extra = extra['Bs_User']
     if sate_extra==[]: return 1
     Maxdis_Bs = max(max(item["Dis_Bs"] for item in sate_extra), max(item["Dis_Bs"] for item in bs_extra))
     Qos_sa=[]

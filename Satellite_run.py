@@ -116,6 +116,8 @@ class Env:
         self.last_tti_state = S_next
         self.request_list = next_request_list
         rrr = ppo_reward.get_paper_reward_info(self.extra_infor,MAX_DOWN_Rate/1000) #mbps 
+        _, counts = np.unique(action_beam, return_counts=True)
+        rrr = 0 if np.any(counts > 1) else rrr
         if epoch>20:
             Tool_Calculate.plot_user_position(S_next["Lat"],S_next["Lon"],S_next["BsIfServ"],DOWN_Rate,MAX_DOWN_Rate,
                                           self.bs_xyz,self.bs_ridth,epoch)
@@ -161,7 +163,7 @@ class Env:
         if len(cur_request_list) == 0:
             return self.extra_infor
         self.extra_infor={'Sate_User': cur_state[[bool(i) for i in Action_Beam]].to_dict(orient='records'),  # 获取指定用户的数据
-                          'Bs_user': cur_state[[not bool(i) for i in Action_Beam]].to_dict(orient='records')}   # 获取剩余用户的数据}
+                          'Bs_User': cur_state[[not bool(i) for i in Action_Beam]].to_dict(orient='records')}   # 获取剩余用户的数据}
         return self.extra_infor
     
 if __name__ == '__main__':

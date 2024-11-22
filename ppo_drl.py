@@ -5,7 +5,7 @@ from torch.optim import Adam
 from tqdm import tqdm
 import time
 import ppo_core
-import ppo_reward
+import pandas as pd
 import json
 from spinup.utils.logx import EpochLogger
 from spinup.utils.mpi_pytorch import setup_pytorch_for_mpi, sync_params, mpi_avg_grads
@@ -14,6 +14,7 @@ from spinup.utils.mpi_tools import mpi_fork, mpi_avg, proc_id, mpi_statistics_sc
 import matplotlib.pyplot as plt
 import Satellite_run
 from SINR_Calculate import *
+import random
 #from sklearn import preprocessing
 import itertools
 import Parameters
@@ -156,7 +157,7 @@ def ppo(env_fn, actor_critic=ppo_core.RA_ActorCritic, ac_kwargs=dict(), seed=0,
     logger.save_config(locals())
 
     # Random seed
-    seed += 10000 * proc_id()
+    seed += 10000 * random.randint(0,1000)
     torch.manual_seed(seed)
     np.random.seed(seed)
 
@@ -261,10 +262,18 @@ def ppo(env_fn, actor_critic=ppo_core.RA_ActorCritic, ac_kwargs=dict(), seed=0,
     #画图
     fig, ax = plt.subplots()
     x,y = [], []
-    all_combinations = list(itertools.combinations(range(0, env.user_number), env.beam_open))
     #初始化环境
     s0,o = env.reset()
-
+    def get_env_info(extra):
+        index = ['UserID', 'BsID', 'BsIfServ', 'Lat', 'Lon', 'Alt', 'Angle', 'Dis_Bs',
+       'ReqID', 'QCI', 'NewData', 'Last_WaitData', 'Total_WaitData',
+       'Finish_Data', 'Time_Delay', 'Down_TxData', 'Down_Throughput']
+        data_sa = pd.DataFrame(extra["Sate_User"])
+        data_bs = pd.DataFrame(extra["Bs_User"])
+        columns_to_sum = ['NewData', 'Last_WaitData','Total_WaitData','Time_Delay','Down_TxData','Down_Throughput']  # 需要求和的列
+        sum_result_sa = data_sa[columns_to_sum].sum()
+        sum_result_bs = data_bs[columns_to_sum].sum()
+        return sum_result_sa,sum_result_bs
 
     # Main loop: collect experience in env and update/log each epoch
     for epoch in range(epochs):#10000轮
@@ -282,49 +291,26 @@ def ppo(env_fn, actor_critic=ppo_core.RA_ActorCritic, ac_kwargs=dict(), seed=0,
             mask = torch.as_tensor(o["Req_list"])
             a, v, logp = ac.step(obs,mask)
             print("=======================动作a=================\n",a)
-            # input()
             print("action",a)
-            #判断动作中是否有重复的
-            # array_str = np.array2string(np.array(a_choosebeam), precision=3, separator=', ', suppress_small=True)
             o_info, next_o, extra,reward,done = env.step(a)
-            unique_elements, counts = np.unique(a, return_counts=True)
-            reward =  0 if np.any(counts > 1) else reward
             print(o_info)
-            #r = ppo_reward.get_reward_info(extra)
-            #根据奖励信息，记录性能数据
+            info_sa,info_bs=get_env_info(extra)
             # 当前的一个obs_tti
-            #tti_reward += r
             #####################################奖励计算#########################################
-            #cell_reward_list = []
-            #capa_list = MAX_DOWN_Rate#每个波束的理论传输容量
-            # print("capa_list",capa_list)
-            tx_bytes, new_bytes = 0, 0
-            delay=[]
-            # for i in range(Parameters.user_number):
-            #     tx_bytes +=o_info['Down_TxData'][i]
-            #     new_bytes += o_info['NewData'][i]
-            #     rrr = ppo_reward.get_paper_reward_info(extra,MAX_DOWN_Rate) #只计算吞吐量的奖励
-            #     delay.append(0) #! 暂时没有考虑时延
-            #     cell_reward_list.append(rrr)
-            #     tti_rrr += rrr
              #只计算吞吐量的奖励
             tti_rdelay = 0 #! 暂时没有考虑时延
-            # print("tti_rdelay",tti_rdelay)
-            #capacity_noinf=np.sum(capa_list) #?获得所以用户的最大Capicity和
-            #tti_rth = tti_rrr/len(cell_reward_list) if len(cell_reward_list)!=0 else 0   #获得吞吐量奖励
             threa_b = 1
             tti_reward = threa_b*reward + (1-threa_b)*tti_rdelay
-            tti_rth=0
-            # tti_reward=tti_rth
             ###########################################################################################
-
-            ep_tx += tx_bytes#每一个epoch的总传输量
-            ep_newbytes += new_bytes
+            ep_tx += info_sa['Down_TxData']#每一个epoch的总传输量
+            ep_newbytes += info_sa['NewData']
+            final_waiting += info_sa['Total_WaitData']
             ep_ret += tti_reward
-            ep_throu+=tti_rth
-            #ep_delay+=r_delay
+            ep_throu+=info_sa['Down_Throughput']
+            ep_delay+=info_sa['Time_Delay']
             ep_delay_normal+=tti_rdelay
             ep_len += 1
+            ##########################################################################################
             buf.store(o, a, v, logp, tti_reward)
             pbar.update(1)
             o = next_o
@@ -339,7 +325,6 @@ def ppo(env_fn, actor_critic=ppo_core.RA_ActorCritic, ac_kwargs=dict(), seed=0,
                 if timeout or epoch_ended:
                     obs = torch.as_tensor(o["ReqData"], dtype=torch.float32)
                     req_list = torch.as_tensor(o["Req_list"], dtype=torch.int32)
-                    # action = torch.as_tensor(o_PPO_reset["action"], dtype=torch.int32)
                     _, v, _ = ac.step(obs,req_list)
                 else:
                     v = 0
