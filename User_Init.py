@@ -209,7 +209,7 @@ class user:
         self.last_final_wait = 0     # 上次时隙结束的等待传输数据大小
         # 当前时隙的信息
         self.current_finish_data = 0   # 当前的完成数据大小
-        self.ontime = random.uniform(0.5, 1)
+        #self.ontime = random.uniform(0.5, 1)
         self.current_newdata = cbrrate * 1 if self.ontime > 1 else cbrrate * self.ontime   # 当前的新到数据大小
         self.current_begin_wait = self.last_final_wait + self.current_newdata    # 当前时隙开始的等待传输数据大小
         if self.current_begin_wait > 0 and self.angle_user2sate >= Parameters.Elevation_Angle:# 当前时隙是否有请求, 判断用户是否在卫星覆盖范围的最小仰角内；

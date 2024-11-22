@@ -54,12 +54,12 @@ class Actor(nn.Module):
 
 
 class MultiCategoricalActor(Actor):
-    def __init__(self, observation, action, hidden_sizes, activation):
+    def __init__(self, observation, action_dim, hidden_sizes, activation):
         super().__init__()
         self.max_req = observation["ReqData"][0]
         #obs_dim = np.prod(observation["ReqData"])  #user_num * userinfo
         obs_dim = np.sum([np.prod(v) for k, v in observation.items()])
-        out_dim = np.prod(action)
+        out_dim = action_dim
         self.logits_net = mlp([obs_dim] + list(hidden_sizes) + [out_dim], activation).to(device)
         self.user_num = Parameters.user_number
         self.beam_open = Parameters.beam_open
@@ -74,17 +74,14 @@ class MultiCategoricalActor(Actor):
         # logits.reshape(mask.shape)
         # logits = logits.masked_fill_(mask, float('-inf'))
         # return logits
-
-        torch.set_printoptions(threshold=100000)
         batch_size = 1 if len(obs.shape) == 1 else obs.shape[0]
         inp = torch.cat((obs,req_list), 0 if len(obs.shape) == 1 else 1)
-        #inp = obs.view(batch_size,-1)
-        # print("inp",inp)
-    
         logits = self.logits_net(inp)
-
+        mask = ~(req_list.bool()).repeat(1, self.beam_open).view(batch_size,self.beam_open,self.user_num)
         # print(f"logits  reshape之前：{logits}")
-        logits = logits.reshape(batch_size,math.factorial(self.user_num) // (math.factorial(self.beam_open) * math.factorial(self.user_num - self.beam_open)))  # 1*18*17
+        logits = logits.reshape(batch_size,self.beam_open,self.user_num)  # 
+        logits = logits.masked_fill_(mask, -np.inf)
+
         # print(f"logits  reshape之后：{logits}")
         return Categorical(logits=logits)
 
@@ -109,7 +106,13 @@ class MultiCategoricalActor(Actor):
         # # 对每个样本的对数概率求和
         # logp_as = selected_log_probs.sum(dim=1)  # [batch_size]
         # return logp_as
-    
+        if len(act.shape) == 2:  # 两个维度，第一个维度为batch_size，第二个维度为每个动作的维数
+            lp = pi.log_prob(act)
+            # print('lp_forward',lp)
+            # print('lp_forward.sum(lp, 1)',torch.sum(lp, 1))
+            return torch.sum(lp, 1)  # 按照行为单位相加
+        else:
+            return torch.sum(pi.log_prob(act))
         # input()
         if len(act.shape) == 2:  # 两个维度，第一个维度为batch_size，第二个维度为每个动作的维数
             # lp = pi.log_prob(act)
@@ -146,8 +149,7 @@ class RA_ActorCritic(nn.Module):
         # print("action_space",action_space)
 
         super().__init__()
-        action_dim = np.prod(action_space)#4*16=64
-
+        action_dim = action_space["action_num"]
         self.pi = MultiCategoricalActor(observation_space, action_dim, hidden_sizes, activation)
         self.v = MLPCritic(observation_space, hidden_sizes, activation)
         self.use_cuda = use_cuda
@@ -168,7 +170,6 @@ class RA_ActorCritic(nn.Module):
         #     req_list = req_list.unsqueeze(0)  # [1, num_beams]
 
         with torch.no_grad():
-            torch.set_printoptions(threshold=100000)
             pi = self.pi._distribution(obs, req_list)
             # print("概率值：",pi.probs)
             a = pi.sample()

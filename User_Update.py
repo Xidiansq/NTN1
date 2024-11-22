@@ -276,7 +276,7 @@ class user_update:
         #     Downlink_Rate = 0
         
         self.curr_Down_TxData = DOWN_Rate[user_index]/1000 # bpms   
-        self.ontime = random.uniform(0.5, 1)
+        #self.ontime = random.uniform(0.5, 1)
         self.curr_NewData = cbrrate * 1 if self.ontime > 1 else cbrrate * self.ontime   # 当前的新到数据大小, 更新self.curr_NewData
         self.last_final_wait = self.curr_WaitData
         

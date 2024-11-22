@@ -48,7 +48,8 @@ class Env:
         self.observation_space = {'ReqData': (self.user_number, self.user_info_len),
                                   'Req_list':(self.user_number)}
         #self.action_space={'beam_choice':(self.user_number,1)}
-        self.action_space=math.factorial(self.user_number) // (math.factorial(self.beam_open) * math.factorial(self.user_number - self.beam_open))
+        #self.action_space=math.factorial(self.user_number) // (math.factorial(self.beam_open) * math.factorial(self.user_number - self.beam_open))
+        self.action_space = {"action_num":(self.user_number*self.beam_open)}
         #状态参数
         # self.beam_list = list(range(0, len(self.beam), 1))
         self.userlist = 0
@@ -95,19 +96,18 @@ class Env:
         """
         
         last_request_list = self.request_list
-        #Action_beam = self.action_beam_reshaping(action_beam)
-
+        Action_beam = self.action_beam_reshaping(action_beam) if len(action_beam)==Parameters.beam_open else action_beam
         Action_bs   = action_bs #TODO 这里需要重写方法
         self.userlist,DOWN_Rate,MAX_DOWN_Rate = User_Update.update_all_user(self.userlist, self.center_sat, self.cover_range, self.bs_xyz,
                                                     self.last_tti_state,self.last_tti_task,last_request_list, 
-                                                    action_beam,Action_bs,self.ontime, self.offtime,self.bs_lla)
+                                                    Action_beam,Action_bs,self.ontime, self.offtime,self.bs_lla)
         #更新所有的用户请求信息，采用while循环，避免都没有产生新的用户
         while True:
             S_next, next_request_list = User_Update.update_user_traffic_info(self.userlist)
             if len(next_request_list) !=[]:
                 break
         #获取需要计算的奖励信息
-        self.extra_infor = self.generate_extra_info(next_request_list, S_next, action_beam)
+        self.extra_infor = self.generate_extra_info(next_request_list, S_next, Action_beam,)
         #print(S_next)
         # print("查看一下",self.extra_infor)
         self.ReqData = S_next.iloc[:, 0: self.user_info_len].to_numpy()
@@ -115,7 +115,7 @@ class Env:
         S_Next_to_PPO = {'ReqData': self.ReqData.flatten(),"Req_list" : self.mask_req}
         self.last_tti_state = S_next
         self.request_list = next_request_list
-        rrr = ppo_reward.get_paper_reward_info(self.extra_infor,MAX_DOWN_Rate/1000) #mbps
+        rrr = ppo_reward.get_paper_reward_info(self.extra_infor,MAX_DOWN_Rate/1000) #mbps 
         if epoch>20:
             Tool_Calculate.plot_user_position(S_next["Lat"],S_next["Lon"],S_next["BsIfServ"],DOWN_Rate,MAX_DOWN_Rate,
                                           self.bs_xyz,self.bs_ridth,epoch)
@@ -172,7 +172,7 @@ if __name__ == '__main__':
     np.random.seed(1)
     s0,s0_PPO=env.reset()
     print(s0)
-    action1 = np.array( [11,13,14,16,18,0])
+    action1 = np.array( [11,13,14,16,18,18])
     print("action1",action1)
 
     a,b,c,d,f=env.step(action1,24)

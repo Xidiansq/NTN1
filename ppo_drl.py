@@ -165,7 +165,7 @@ def ppo(env_fn, actor_critic=ppo_core.RA_ActorCritic, ac_kwargs=dict(), seed=0,
     obs_dim = np.prod(env.observation_space["ReqData"])
     mask_dim = np.prod(env.observation_space["Req_list"])
     #act_dim = env.action_space["beam_choice"][0]
-    act_dim = env.action_space
+    act_dim = env.beam_open
 
 
     # Create actor-critic module
@@ -182,7 +182,7 @@ def ppo(env_fn, actor_critic=ppo_core.RA_ActorCritic, ac_kwargs=dict(), seed=0,
 
     # Set up experience buffer
     local_steps_per_epoch = int(steps_per_epoch / num_procs())  #每个线程在一个训练周期需要执行的步骤   50除以
-    buf = PPOBuffer(obs_dim, mask_dim, 1, local_steps_per_epoch, gamma, lam)
+    buf = PPOBuffer(obs_dim, mask_dim, act_dim, local_steps_per_epoch, gamma, lam)
 
     def entropy(dist):
         #dist = torch.distributions.Categorical(logits=dist)
@@ -190,7 +190,7 @@ def ppo(env_fn, actor_critic=ppo_core.RA_ActorCritic, ac_kwargs=dict(), seed=0,
         logits = torch.clamp(dist.logits, min=min_real)
         p_log_p = logits * dist.probs
         return -p_log_p.sum(-1)
-
+    
     # Set up function for computing PPO policy loss
     def compute_loss_pi(data):
         obs, deque, act, adv, logp_old = data['obs'], data['mask'], data['act'], data['adv'], data['logp']
@@ -281,14 +281,14 @@ def ppo(env_fn, actor_critic=ppo_core.RA_ActorCritic, ac_kwargs=dict(), seed=0,
             obs = torch.as_tensor(o["ReqData"], dtype=torch.float32)
             mask = torch.as_tensor(o["Req_list"])
             a, v, logp = ac.step(obs,mask)
-            a_choosebeam = all_combinations[a[0]]
             print("=======================动作a=================\n",a)
             # input()
-            print("action",a_choosebeam)
-            action_19=np.zeros(Parameters.user_number)
-            action_19[np.array(a_choosebeam)]=1
+            print("action",a)
+            #判断动作中是否有重复的
             # array_str = np.array2string(np.array(a_choosebeam), precision=3, separator=', ', suppress_small=True)
-            o_info, next_o, extra,reward,done = env.step(action_19)
+            o_info, next_o, extra,reward,done = env.step(a)
+            unique_elements, counts = np.unique(a, return_counts=True)
+            reward =  0 if np.any(counts > 1) else reward
             print(o_info)
             #r = ppo_reward.get_reward_info(extra)
             #根据奖励信息，记录性能数据
@@ -398,8 +398,8 @@ if __name__ == '__main__':
     logger_kwargs = setup_logger_kwargs("ppo-beam2", data_dir=trace_dir, datestamp=True)#时间戳
     ppo(Satellite_run,
         actor_critic=ppo_core.RA_ActorCritic, ac_kwargs={"hidden_sizes": (256, 512,1024, 512, 256)},
-        steps_per_epoch=50, epochs=1000, gamma=0.99, clip_ratio=0.2, pi_lr=3e-3,
-        vf_lr=1e-3, train_pi_iters=50, train_v_iters=50, lam=0.97, max_ep_len=50,
+        steps_per_epoch=50, epochs=1000, gamma=0.99, clip_ratio=0.2, pi_lr=3e-4,
+        vf_lr=1e-4, train_pi_iters=50, train_v_iters=50, lam=0.97, max_ep_len=50,
         logger_kwargs=logger_kwargs, use_cuda=True)
     # ppo(statellite_run,
     #     actor_critic=core_beam.RA_ActorCritic, ac_kwargs={"hidden_sizes": (256, 512, 1024, 512, 256)},

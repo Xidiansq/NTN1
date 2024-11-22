@@ -7,25 +7,25 @@
 center_latitude = 36.0735  #°                中心维度    
 center_longitude = 99.0898 #°               中心经度
 cover_range = 200 * 1000 #m                 卫星覆盖范围
-cbrrate = 3000000
+cbrrate = 5000000
 
 
 #用户参数
-user_number = 25 #                          用户状态
+user_number = 20 #                          用户状态
 user_info_len = 16#                         用户状态长度                          
 Gain_user = 30 #dBi                         用户接收增益
 movespeed = 1000 #m/s                        用户移动速度
 
 # Traffic参数
-ontime = 7   # 业务持续时间分布的均值
-offtime = 3   # 业务关闭时间分布的均值
+ontime = 8   # 业务持续时间分布的均值
+offtime = 2   # 业务关闭时间分布的均值
 
 
 #卫星参数
 sate_lla = [36.0735, 99.0898, 1.13468e+06]      #卫星的经纬度坐标
 sate_xyz = [-958408, 5.99098e+06, 4.41951e+06]  #卫星的xyz坐标
 
-beam_open = 8  #                           波束数量 
+beam_open = 6  #                           波束数量 
 frequency = 2e10  #Hz                       中心频率
 HLeo = 1300 * 1000 #m                        卫星高度
 Power_SateTotal = 30 # 30-35dBW             总功率
