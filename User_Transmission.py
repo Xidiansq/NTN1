@@ -90,12 +90,7 @@ class downlink_transmision_tool:
                 if(index_n == index_k):
                     continue
                 else:
-                    #获取对应的弧度值
-                    #userN_position = np.radians(np.array([req_user_info.at[index_n, 'Lat'], req_user_info.at[index_n, 'Lon'], req_user_info.at[index_n, 'Alt']]))
-                    #计算偏移角
-                    # angle_K2N = np.arccos(np.sin(userK_position[0]) * np.sin(userN_position[0]) + 
-                    #                             np.cos(userK_position[0]) * np.cos(userN_position[0]) * np.cos(userK_position[1] - userN_position[1]))
-                    #print("req_user_info.at[index_k]",np.array([req_user_info.at[index_k, 'Lat'], req_user_info.at[index_k, 'Lon'], req_user_info.at[index_k, 'Alt']]))
+                
                     angle_K2N = np.radians(Satellite_Bs.angle_between_users(np.array([req_user_info.at[index_k, 'Lat'], req_user_info.at[index_k, 'Lon'], req_user_info.at[index_k, 'Alt']]),
                                                                  np.array([req_user_info.at[index_n, 'Lat'], req_user_info.at[index_n, 'Lon'], req_user_info.at[index_n, 'Alt']]),
                                                                  Parameters.sate_lla)
@@ -127,6 +122,10 @@ class downlink_transmision_tool:
         Gain_matrix = self.get_sa_gain(req_user_info, req_list)#获取增益矩阵
         Path_loss_matrxi = self.get_sa_loss_path(req_user_info, req_list)#计算每个用户的路径损耗
         self.req_user_num = len(req_user_info)
+        Gain_self = 10 * np.log10(Gain_matrix/10) #dBi
+        h_sa = 10**((Gain_self + self.Gr_user + Path_loss_matrxi) /10)#!这里开始
+
+        
         for i in range(self.req_user_num):
             interference=0
             if(action[i] == 0): #i 就是代表这个请求用户会被服务，计算这个用户的sinr就行
@@ -134,7 +133,9 @@ class downlink_transmision_tool:
             else:
                 #首先这个用户会接受来自自己的增益
                 Gain_self = 10 * np.log10(Gain_matrix[i][i]) #dBi
+                h_sa = 10 ** ((Gain_self + self.Gr_user + Path_loss_matrxi[0][i]) /10)
                 power_self = 10 ** ((Gain_self + self.Gr_user + Path_loss_matrxi[0][i]) /10) * (10**(self.Power_Beam/10)) #W
+
                 for j in range(self.req_user_num):
                     if i == j or action[j] == 0:
                         continue
@@ -230,7 +231,8 @@ class downlink_transmision_tool:
                 interference=0
                 #基站给此用户的增益
                 Gain_self = 10 * np.log10(Gain_matrix[user_bs_id][user_bs_id]) #dBi
-                power_self = 10 ** ((Gain_self + self.Gr_user +       
+                power_self = 10 ** ((Gain_self + 
+                                     self.Gr_user +       
                                      Path_loss_matrxi[user_bs_id] + 
                                      Diffraction_loss_matrxi[user_bs_id]) /10) * (10**(self.Power_bs/(10*len(user_bs)))) #W 除以天线的数量 后面需要改
                 for other_user_bs_id in user_bs:

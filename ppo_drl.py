@@ -294,6 +294,7 @@ def ppo(env_fn, actor_critic=ppo_core.RA_ActorCritic, ac_kwargs=dict(), seed=0,
             print("action",a)
             o_info, next_o, extra,reward,done = env.step(a)
             print(o_info)
+            #####################################获得日志信息######################################
             info_sa,info_bs=get_env_info(extra)
             # 当前的一个obs_tti
             #####################################奖励计算#########################################

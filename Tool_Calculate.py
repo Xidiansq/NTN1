@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle
 import Parameters
+import cvxpy as cp
 #from geopy.distance import geodesic
 
 
@@ -176,3 +177,11 @@ def plot_user_position(lat,lon,req,DOWN_Rate,MAX_DOWN_Rate,bs_xyz,bs_ridth,epoch
     plt.legend(loc='upper left')
     plt.show()
     plt.savefig("./result"+str(epoch)+".jpg")
+def sa_power_allocation(h_sa,action_beam,Total_Requset):
+    P    = cp.Variable(Parameters.beam_open,nonneg = None) #波束功率分配
+    SINR = cp.Variable(Parameters.beam_open)               #信干噪比分配
+    constraints = []                                       #限制条件
+    for k in range(k):
+        interference = cp.sum(h_sa[action_beam[k]][action_beam[j]] for j in range(Parameters.beam_open) if j!=k)
+        SINR[action_beam[k]] = h_sa[action_beam[k]][action_beam[k]]*P[k]/(Parameters.noisy + interference)
+        constraints.append(Parameters.frequency  )         #!到这里了，得搞明白怎么建立优化问题
