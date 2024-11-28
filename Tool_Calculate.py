@@ -4,6 +4,10 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Circle
 import Parameters
 import cvxpy as cp
+
+
+
+
 #from geopy.distance import geodesic
 
 
@@ -177,11 +181,56 @@ def plot_user_position(lat,lon,req,DOWN_Rate,MAX_DOWN_Rate,bs_xyz,bs_ridth,epoch
     plt.legend(loc='upper left')
     plt.show()
     plt.savefig("./result"+str(epoch)+".jpg")
-def sa_power_allocation(h_sa,action_beam,Total_Requset):
-    P    = cp.Variable(Parameters.beam_open,nonneg = None) #波束功率分配
-    SINR = cp.Variable(Parameters.beam_open)               #信干噪比分配
-    constraints = []                                       #限制条件
-    for k in range(k):
-        interference = cp.sum(h_sa[action_beam[k]][action_beam[j]] for j in range(Parameters.beam_open) if j!=k)
-        SINR[action_beam[k]] = h_sa[action_beam[k]][action_beam[k]]*P[k]/(Parameters.noisy + interference)
-        constraints.append(Parameters.frequency  )         #!到这里了，得搞明白怎么建立优化问题
+
+def Power_Allocation(H_gain):
+    """
+    H_gain:信道系数矩阵(需要除以噪声完成归一化)
+    """
+    # 功率转换函数 (dBm 转线性功率)
+    def db2pow(db):
+        return 10 ** (db / 10)
+    # 参数设置
+    U = H_gain.shape[1]  # 用户数量
+    C = H_gain.shape[1]  # 波束数量
+    P = Parameters.Power_BeamMax  # 最大功率 (dBm)
+    Max_iter = 50  # 最大迭代次数
+    epsilon = 1e-5  # 收敛阈值
+    # 初始化变量
+    p_temp = np.full(C, db2pow(P) / U)  # 等功率初始化
+    A = np.ones((U, C)) - np.eye(U)  # 干扰矩阵
+    sum_rate = []  # 记录每次迭代的和速率
+    sum_rate_old = 10000  # 初始和速率
+    iter_count = 0
+    # 迭代优化
+    while iter_count < Max_iter:
+        iter_count += 1
+        # Step 1: 计算中间变量 y_star
+        interference = H_gain * A @ p_temp
+        y_star = np.sqrt(np.diag(H_gain) * p_temp)/ (interference+1)
+        # Step 2: 使用 cvxpy 优化功率分配
+        p = cp.Variable((C,), nonneg=True)
+        objective = cp.sum(
+            cp.log(
+                1 + 2 * cp.multiply(y_star , cp.sqrt(cp.multiply(cp.diag(H_gain) ,p)) ) -cp.multiply((y_star ** 2),cp.multiply(H_gain ,A ) * p + 1)
+            )
+        )
+        constraints = [
+            p >= 1,
+            cp.sum(p) <= db2pow(P),
+        ]
+        problem = cp.Problem(cp.Maximize(objective), constraints)
+        problem.solve()
+
+        # 检查求解结果
+        if p.value is not None and not np.isnan(problem.value):
+            sum_rate.append(problem.value)
+
+        # 更新功率分配
+        p_temp = p.value
+
+        # 判断收敛
+        if abs(problem.value - sum_rate_old) / sum_rate_old < epsilon:
+            break
+        else:
+            sum_rate_old = problem.value
+    return p_temp

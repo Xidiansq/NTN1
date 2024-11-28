@@ -78,7 +78,7 @@ def reward_sa_Qos(angle_Sa2User, distance_bs,Request,Capacity,Maxdis_Bs,MAX_DOWN
     print("beta_n",beta_n)
     print("eta_n",eta_n)
     #print("reward",beta_n*eta_n 
-    return Q_n*beta_n*eta_n 
+    return eta_n 
 def reward_bs_Qos(Request,Capacity):
     """
     Function:计算基站用户的Qos

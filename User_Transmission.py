@@ -21,7 +21,7 @@ class downlink_transmision_tool:
         self.frequency = Parameters.frequency #中心频率2e10   # Hz
         self.velocity = 3e8
         self.gama = 0.5
-        self.noisy = 2.5118864315095823e-12
+        self.noisy = 10**(Parameters.noisy/10)
 
         #卫星参数
         self.sate_lla = Parameters.sate_lla
@@ -106,6 +106,17 @@ class downlink_transmision_tool:
                     # Gain_matrix[i][j]= self.Gain_beam - ((12 * (10 ** (self.Gain_beam / 10))) / self.gama) * np.square(theta_matrix[i][j] / (70 * np.pi))#
         Gain_matrix = 10 ** (Gain_matrix / 10)#转化为功率值
         return Gain_matrix
+    def get_sa_sinr_TxMax(self, action, req_user_info, req_list):
+        Gain_matrix = self.get_sa_gain(req_user_info, req_list)#获取增益矩阵
+        Path_loss_matrxi = self.get_sa_loss_path(req_user_info, req_list)#计算每个用户的路径损耗
+        self.req_user_num = len(req_user_info)
+        h_sa = np.zeros((int(sum(action)),int(sum(action))))#!这里开始
+        selectted_user = np.where(action == 1)[0]
+        for i in range(len(selectted_user)):
+            for j in range(len(selectted_user)):
+                Gain= 10 * np.log10(Gain_matrix[selectted_user[i]][selectted_user[j]]) #dBi
+                h_sa[i][j]=(10 ** ((Gain+ self.Gr_user + Path_loss_matrxi[0][selectted_user[i]]) /10))/self.noisy
+        return True
 
     def get_sa_sinr(self, action, req_user_info, req_list):
         """
@@ -122,10 +133,8 @@ class downlink_transmision_tool:
         Gain_matrix = self.get_sa_gain(req_user_info, req_list)#获取增益矩阵
         Path_loss_matrxi = self.get_sa_loss_path(req_user_info, req_list)#计算每个用户的路径损耗
         self.req_user_num = len(req_user_info)
-        Gain_self = 10 * np.log10(Gain_matrix/10) #dBi
-        h_sa = 10**((Gain_self + self.Gr_user + Path_loss_matrxi) /10)#!这里开始
-
-        
+        Gain_self = 10 * np.log10(Gain_matrix/10) #dB
+        h_sa = np.zeros((int(sum(action)),int(sum(action))))#!这里开始
         for i in range(self.req_user_num):
             interference=0
             if(action[i] == 0): #i 就是代表这个请求用户会被服务，计算这个用户的sinr就行
@@ -133,9 +142,8 @@ class downlink_transmision_tool:
             else:
                 #首先这个用户会接受来自自己的增益
                 Gain_self = 10 * np.log10(Gain_matrix[i][i]) #dBi
-                h_sa = 10 ** ((Gain_self + self.Gr_user + Path_loss_matrxi[0][i]) /10)
                 power_self = 10 ** ((Gain_self + self.Gr_user + Path_loss_matrxi[0][i]) /10) * (10**(self.Power_Beam/10)) #W
-
+                
                 for j in range(self.req_user_num):
                     if i == j or action[j] == 0:
                         continue
@@ -264,6 +272,7 @@ def calculate_datarate(Action_beam, req_user_info, req_list,bs_lla,bs_state):
     downlink_tool = downlink_transmision_tool()
     Gain_sa_matrix,Path_loss_sa= downlink_tool.get_sa_sinr(Action_beam, req_user_info, req_list) #获得卫星用户的SINR
     downlink_tool.get_bs_sinr( req_user_info,bs_lla,bs_state,Gain_sa_matrix,Path_loss_sa) #获得基站用户的SINR
+    downlink_tool.get_sa_sinr_TxMax(Action_beam, req_user_info, req_list)
     DOWN_Rate = np.log2(1 + downlink_tool.sinr_matrix) * downlink_tool.bw
     MAX_DOWN_Rate = np.log2(1 + downlink_tool.max_sinr_matrix) * downlink_tool.bw
     # print("DOWN_Rate", downlink_tool.sinr_matrix)
