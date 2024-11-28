@@ -14,7 +14,7 @@ class downlink_transmision_tool:
         #用户参数
         self.req_user_num = 0
         self.otheruser_conbeam_num = 0
-        self.Gr_user =  Parameters.Gain_user-16 #  30 dBi
+        self.Gr_user =  Parameters.Gain_user - 16 #  30 dBi
 
         #通信参数
         self.bw = Parameters.bw          #带宽 500e6 HZ
@@ -270,7 +270,7 @@ def calculate_datarate(Action_beam, req_user_info, req_list,bs_lla,bs_state):
     ## 下行传输
     downlink_tool = downlink_transmision_tool()
     Gain_sa_matrix,Path_loss_sa= downlink_tool.get_sa_sinr(Action_beam, req_user_info, req_list) #获得卫星用户的SINR
-    downlink_tool.get_bs_sinr( req_user_info,bs_lla,bs_state,Gain_sa_matrix,Path_loss_sa,p_best) #获得基站用户的SINR
+    downlink_tool.get_bs_sinr( req_user_info,bs_lla,bs_state,Gain_sa_matrix,Path_loss_sa) #获得基站用户的SINR
     DOWN_Rate = np.log2(1 + downlink_tool.sinr_matrix) * downlink_tool.bw
     MAX_DOWN_Rate = np.log2(1 + downlink_tool.max_sinr_matrix) * downlink_tool.bw
     # print("DOWN_Rate", downlink_tool.sinr_matrix)

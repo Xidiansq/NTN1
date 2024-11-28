@@ -16,15 +16,15 @@
     "gamma":	0.99,
     "lam":	0.97,
     "logger":	{
-        "<spinup.utils.logx.EpochLogger object at 0x000001E0E7B01D00>":	{
+        "<spinup.utils.logx.EpochLogger object at 0x00000174422EB250>":	{
             "epoch_dict":	{},
             "exp_name":	"ppo-beam",
             "first_row":	true,
             "log_current_row":	{},
             "log_headers":	[],
-            "output_dir":	"d:\\Program\\\u901a\u4fe1\\sa_bs\\sa_bs/result\\2024-11-28_ppo-beam",
+            "output_dir":	"D:\\Program\\\u901a\u4fe1\\sa_bs\\sa_bs/result\\2024-11-28_ppo-beam",
             "output_file":	{
-                "<_io.TextIOWrapper name='d:\\\\Program\\\\\u901a\u4fe1\\\\sa_bs\\\\sa_bs/result\\\\2024-11-28_ppo-beam\\\\progress.txt' mode='w' encoding='cp936'>":	{
+                "<_io.TextIOWrapper name='D:\\\\Program\\\\\u901a\u4fe1\\\\sa_bs\\\\sa_bs/result\\\\2024-11-28_ppo-beam\\\\progress.txt' mode='w' encoding='cp936'>":	{
                     "mode":	"w"
                 }
             }
@@ -32,7 +32,7 @@
     },
     "logger_kwargs":	{
         "exp_name":	"ppo-beam",
-        "output_dir":	"d:\\Program\\\u901a\u4fe1\\sa_bs\\sa_bs/result\\2024-11-28_ppo-beam"
+        "output_dir":	"D:\\Program\\\u901a\u4fe1\\sa_bs\\sa_bs/result\\2024-11-28_ppo-beam"
     },
     "max_ep_len":	50,
     "pi_lr":	0.0003,

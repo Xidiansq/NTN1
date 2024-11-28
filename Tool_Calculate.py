@@ -128,8 +128,8 @@ def plot_user_position(lat,lon,req,DOWN_Rate,MAX_DOWN_Rate,bs_xyz,bs_ridth,epoch
     plt.figure(figsize=(10, 6))
 
     sa_served_points = plt.scatter(
-    x[is_served == -2],
-    y[is_served == -2],
+    lon[is_served == -2],
+    lat[is_served == -2],
     c='blue',
     s=50,
     edgecolors='black',
@@ -137,23 +137,32 @@ def plot_user_position(lat,lon,req,DOWN_Rate,MAX_DOWN_Rate,bs_xyz,bs_ridth,epoch
     )
 
     not_served_points = plt.scatter(
-        x[is_served == -1],
-        y[is_served == -1],
+        lon[is_served == -1],
+        lat[is_served == -1],
         c='black',
         s=50,
         edgecolors='black',
         label='Unser'
     )
     bs_served_points = plt.scatter(
-        x[is_served >-1],
-        y[is_served >-1],
+        lon[is_served >-1],
+        lat[is_served >-1],
         c='red',
         s=50,
         edgecolors='black',
         label='Bs_user'
     )
+    sate = plt.scatter(
+        Parameters.sate_lla[1],
+        Parameters.sate_lla[0],
+        c='g',
+        s=100,
+        edgecolors='black',
+        label='Sate'
+
+    )
     for i, user_id in enumerate(user_ids):
-        plt.text(x[i], y[i], f'{user_id,round(DOWN_Sinr[i],1),round(MAX_DOWN_Sinr[i],1)}', fontsize=9, ha='right', va='bottom', color='black')
+        plt.text(lon[i], lat[i], f'{user_id,round(DOWN_Sinr[i],1),round(MAX_DOWN_Sinr[i],1)}', fontsize=9, ha='right', va='bottom', color='black')
 #     for bs in (bs_xyz):
 # # 绘制基站点
 #         station_point = plt.scatter(

@@ -32,14 +32,16 @@ def get_paper_reward_info(extra,MAX_DOWN_Rate):
                                     )
         #Sate_step_Qos += Sate_user["Dis_Bs"]/Maxdis_Bs * Sate_user["Down_TxData"] / Sate_user["Total_WaitData"] if Sate_user["Total_WaitData"] != 0 else 1
 
-    # for Bs_User in bs_extra:
-    #     Bs_step_new += Bs_User["NewData"]        #该时刻新到的数据
-    #     Bs_step_wait += Bs_User["Total_WaitData"]#所有等待的数据
-    #     Bs_step_downtx +=Bs_User["Down_TxData"]  #该时刻传输的数据
-    #     Bs_step_downthroughput += Bs_User["Down_Throughput"] #该时刻的下行吞吐量
-    #     Qos_bs.append(reward_bs_Qos(Bs_User["Total_WaitData"],
-    #                                 Bs_User["Down_TxData"])
-    #                                 if Bs_User["Total_WaitData"] != 0 else 1)
+    for Bs_User in bs_extra:
+        Bs_step_new += Bs_User["NewData"]        #该时刻新到的数据
+        Bs_step_wait += Bs_User["Total_WaitData"]#所有等待的数据
+        Bs_step_downtx +=Bs_User["Down_TxData"]  #该时刻传输的数据
+        Bs_step_downthroughput += Bs_User["Down_Throughput"] #该时刻的下行吞吐量
+        Qos_bs.append(reward_bs_Qos(Bs_User["Total_WaitData"],
+                                    Bs_User["Down_TxData"],
+                                    MAX_DOWN_Rate[int(Bs_User["UserID"])])
+                                    )
+
 
         
 
@@ -53,7 +55,7 @@ def get_paper_reward_info(extra,MAX_DOWN_Rate):
     Bs_step_ave_downthroughput = Bs_step_downthroughput / len(bs_extra) if len(bs_extra) > 0 else 0
 
     # r1 = reward_Qos(Sate_step_Qos, Bs_step_Qos)
-    r1 =  1 * (sum(Qos_sa)/len(Qos_sa))  #+0.5 * (sum(Qos_bs)/len(Qos_bs)) +
+    r1 =  0.5 * (sum(Qos_sa)/len(Qos_sa))  +0.5 * (sum(Qos_bs)/len(Qos_bs)) 
     print("---------------------------------")
     print("reward",r1)
     print("---------------------------------")
@@ -73,13 +75,13 @@ def reward_sa_Qos(angle_Sa2User, distance_bs,Request,Capacity,Maxdis_Bs,MAX_DOWN
     Q_n=channel_quality_factor(angle_Sa2User)
     beta_n=service_priority(distance_bs,Maxdis_Bs)
     eta_n=capacity_request_ratio(Request,Capacity,MAX_DOWN_Rate)
-    print("---------------------------------")
-    print("Q_n",Q_n)
-    print("beta_n",beta_n)
-    print("eta_n",eta_n)
+    # print("---------------------------------")
+    # print("Q_n",Q_n)
+    # print("beta_n",beta_n)
+    # print("eta_n",eta_n)
     #print("reward",beta_n*eta_n 
     return eta_n 
-def reward_bs_Qos(Request,Capacity):
+def reward_bs_Qos(Request,Capacity,MAX_DOWN_Rate):
     """
     Function:计算基站用户的Qos
     Input:
@@ -87,7 +89,7 @@ def reward_bs_Qos(Request,Capacity):
         Capacity:信道容量
     Output:基站用户的Qos
     """
-    return capacity_request_ratio(Request,Capacity)
+    return capacity_request_ratio(Request,Capacity,MAX_DOWN_Rate)
 
 
 def channel_quality_factor(angle_Sa2User):
@@ -111,10 +113,10 @@ def capacity_request_ratio(Request,Capacity,MAX_DOWN_Rate):
     """
     计算要求和容量的比值
     """
-    if Request==0: return 0
-    
-    
-    return Capacity/min(Request,MAX_DOWN_Rate)
+    if Request==0 : return 0
+    if Request!=0 and MAX_DOWN_Rate==0: return 0
+    reward = Capacity/min(Request,MAX_DOWN_Rate) 
+    return reward 
 
 if __name__ == '__main__':
     print(channel_quality_factor(80))
