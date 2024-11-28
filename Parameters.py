@@ -22,8 +22,10 @@ offtime = 2   # 业务关闭时间分布的均值
 
 
 #卫星参数
-sate_lla = [36.0735, 99.0898, 1.13468e+06]      #卫星的经纬度坐标
-sate_xyz = [-958408, 5.99098e+06, 4.41951e+06]  #卫星的xyz坐标
+#sate_lla = [36.0735, 99.0898, 1.13468e+06]      #卫星的经纬度坐标
+sate_lla = [37.0, 100.0, 1.13468e+06]      #卫星的经纬度坐标
+#sate_xyz = [-958408, 5.99098e+06, 4.41951e+06]  #卫星的xyz坐标
+sate_xyz = [-1042963.7499107805, 5914941.353389322, 4525987.939609339]
 
 beam_open = 6  #                           波束数量 
 frequency = 2e10  #Hz                       中心频率
@@ -49,6 +51,7 @@ front_to_back_ratio = 30#dB                 前后比（定向天线的前后比
 #                                           前后比越大，天线的后向辐射（或接收）越小。）
 antenna_num = 3 #                           基站的天线数量
 side_length= 137454.51384890845#            小区六边形边长
+
 # # Stalink参数
 # TLE_PATH = "./STARLINK_TLE.txt"
 # Type = "STARLINK"
@@ -57,7 +60,6 @@ side_length= 137454.51384890845#            小区六边形边长
 # Beam_Design_Para = 0
 # maxArcDistFromSubPos = maxArcDistFromSubPos_list[Beam_Design_Para]
 # Elevation_Angle = Elevation_Angle_list[Beam_Design_Para]
-
 
 # #zuixao
 

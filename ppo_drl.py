@@ -16,9 +16,9 @@ import Satellite_run
 from SINR_Calculate import *
 import random
 #from sklearn import preprocessing
-import itertools
-import Parameters
-import Tool_Calculate
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning)
+
 ax = []  # 定义一个 x 轴的空列表用来接收动态的数据
 ay = []  # 定义一个 y 轴的空列表用来接收动态的数据
 plt.ion()  # 开启一个画图的窗口
@@ -381,7 +381,7 @@ if __name__ == '__main__':
     import os
 
     trace_dir = os.getcwd() + "/result"
-    logger_kwargs = setup_logger_kwargs("ppo-beam2", data_dir=trace_dir, datestamp=True)#时间戳
+    logger_kwargs = setup_logger_kwargs("ppo-beam", data_dir=trace_dir, datestamp=True)#时间戳
     ppo(Satellite_run,
         actor_critic=ppo_core.RA_ActorCritic, ac_kwargs={"hidden_sizes": (256, 512,1024, 512, 256)},
         steps_per_epoch=50, epochs=1000, gamma=0.99, clip_ratio=0.2, pi_lr=3e-4,

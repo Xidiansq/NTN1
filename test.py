@@ -30,7 +30,7 @@ class downlink_transmision_tool:
         self.sate_xyz = Parameters.sate_xyz
         self.Hleo = Parameters.HLeo           #550000   # m
         self.Power_SateTotal = Parameters.Power_SateTotal   #30dBW
-        self.Power_Beam_average = self.Power_SateTotal/ Parameters.beam_open
+        self.Power_Beam_average = self.Power_SateTotal-10*np.log10(Parameters.beam_open)
         self.Power_BeamMax = Parameters.Power_BeamMax     #0.8*total
         self.Gain_beam = Parameters.Gain_Beam            #42dBi
         self.sate_threedB = Parameters.sate_threedB      #1dB

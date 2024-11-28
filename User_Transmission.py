@@ -6,7 +6,7 @@ import Parameters
 import Satellite_run
 from scipy.special import jn
 import Satellite_Bs
-
+import Tool_Calculate
 
 
 class downlink_transmision_tool:
@@ -14,21 +14,21 @@ class downlink_transmision_tool:
         #用户参数
         self.req_user_num = 0
         self.otheruser_conbeam_num = 0
-        self.Gr_user =  Parameters.Gain_user #  30 dBi
+        self.Gr_user =  Parameters.Gain_user-16 #  30 dBi
 
         #通信参数
         self.bw = Parameters.bw          #带宽 500e6 HZ
         self.frequency = Parameters.frequency #中心频率2e10   # Hz
         self.velocity = 3e8
         self.gama = 0.5
-        self.noisy = 10**(Parameters.noisy/10)
-
+        self.noisy = 2.5118864315095823e-12
+        self.Beam_Power = []            #卫星波束分配情况(w)
         #卫星参数
         self.sate_lla = Parameters.sate_lla
         self.sate_xyz = Parameters.sate_xyz
         self.Hleo = Parameters.HLeo           #550000   # m
         self.Power_SateTotal = Parameters.Power_SateTotal   #30dBW
-        self.Power_Beam = self.Power_SateTotal/ Parameters.beam_open
+        self.Power_Beam_average = self.Power_SateTotal-10*np.log10(Parameters.beam_open)
         self.Power_BeamMax = Parameters.Power_BeamMax     #0.8*total
         self.Gain_beam = Parameters.Gain_Beam            #42dBi
         self.sate_threedB = Parameters.sate_threedB      #1dB
@@ -46,6 +46,7 @@ class downlink_transmision_tool:
         #最终输出
         self.sinr_matrix = np.zeros(Parameters.user_number)
         self.max_sinr_matrix = np.zeros(Parameters.user_number)
+        self.Power_Allcation_Sign = True #是否进行功率控制
     def get_sa_loss_path(self, req_user_info, req_list):
         """
         计算路径损耗：根据用户和卫星的距离计算
@@ -106,17 +107,6 @@ class downlink_transmision_tool:
                     # Gain_matrix[i][j]= self.Gain_beam - ((12 * (10 ** (self.Gain_beam / 10))) / self.gama) * np.square(theta_matrix[i][j] / (70 * np.pi))#
         Gain_matrix = 10 ** (Gain_matrix / 10)#转化为功率值
         return Gain_matrix
-    def get_sa_sinr_TxMax(self, action, req_user_info, req_list):
-        Gain_matrix = self.get_sa_gain(req_user_info, req_list)#获取增益矩阵
-        Path_loss_matrxi = self.get_sa_loss_path(req_user_info, req_list)#计算每个用户的路径损耗
-        self.req_user_num = len(req_user_info)
-        h_sa = np.zeros((int(sum(action)),int(sum(action))))#!这里开始
-        selectted_user = np.where(action == 1)[0]
-        for i in range(len(selectted_user)):
-            for j in range(len(selectted_user)):
-                Gain= 10 * np.log10(Gain_matrix[selectted_user[i]][selectted_user[j]]) #dBi
-                h_sa[i][j]=(10 ** ((Gain+ self.Gr_user + Path_loss_matrxi[0][selectted_user[i]]) /10))/self.noisy
-        return True
 
     def get_sa_sinr(self, action, req_user_info, req_list):
         """
@@ -134,7 +124,16 @@ class downlink_transmision_tool:
         Path_loss_matrxi = self.get_sa_loss_path(req_user_info, req_list)#计算每个用户的路径损耗
         self.req_user_num = len(req_user_info)
         Gain_self = 10 * np.log10(Gain_matrix/10) #dB
-        h_sa = np.zeros((int(sum(action)),int(sum(action))))#!这里开始
+        selectted_user = np.where(action == 1)[0] #用户id（从小到大）
+        h_sa = 10 ** ((Gain_self + self.Gr_user + Path_loss_matrxi[0]) /10)/self.noisy
+        h_sa = h_sa[np.ix_(selectted_user, selectted_user)] #得到卫星用户的信道系数矩阵
+        ##################进行功率分配###############################################
+        self.Beam_Power=action.copy()
+        if self.Power_Allcation_Sign:
+            self.Beam_Power[self.Beam_Power==1] = Tool_Calculate.Power_Allocation(h_sa) 
+        else:
+            self.Beam_Power[self.Beam_Power==1] = 10**(self.Power_Beam_average/10)
+        ##################################################################################
         for i in range(self.req_user_num):
             interference=0
             if(action[i] == 0): #i 就是代表这个请求用户会被服务，计算这个用户的sinr就行
@@ -142,14 +141,14 @@ class downlink_transmision_tool:
             else:
                 #首先这个用户会接受来自自己的增益
                 Gain_self = 10 * np.log10(Gain_matrix[i][i]) #dBi
-                power_self = 10 ** ((Gain_self + self.Gr_user + Path_loss_matrxi[0][i]) /10) * (10**(self.Power_Beam/10)) #W
+                power_self = 10 ** ((Gain_self + self.Gr_user + Path_loss_matrxi[0][i]) /10) * self.Beam_Power[i] #W
                 
                 for j in range(self.req_user_num):
                     if i == j or action[j] == 0:
                         continue
                     else:
                         Gain_interf = 10 * np.log10(Gain_matrix[j][i]) #dBi
-                        interf = 10 ** ((Gain_interf+self.Gr_user + Path_loss_matrxi[0][i]) /10) * (10 ** (self.Power_Beam/10)) #  #其他波束干扰+bs干扰阈值
+                        interf = 10 ** ((Gain_interf+self.Gr_user + Path_loss_matrxi[0][i]) /10) * self.Beam_Power[j]#  #其他波束干扰+bs干扰阈值
                         interference += interf
                 interference += 10 ** (self.BS_TNT_TH / 10) #最后加上来自基站的干扰
                 #interference = 10 ** ((self.Gr_user + Path_loss_matrxi[0][i]) / 10) * interference 
@@ -253,7 +252,7 @@ class downlink_transmision_tool:
                 for user_sa_id in user_sa:
                     
                     Gain_sa_interf = 10 * np.log10(Gain_sa_matrix[user_sa_id][user_bs_id]) #dBi  来自其他基站内卫星用户的增益矩阵
-                    interf = 10 ** ((Gain_sa_interf+self.Gr_user + Path_loss_sa[0][user_bs_id]) /10) * (10 ** (self.Power_Beam/10)) #  其他基站内被卫星服务的用户的干扰
+                    interf = 10 ** ((Gain_sa_interf+self.Gr_user + Path_loss_sa[0][user_bs_id]) /10) * self.Beam_Power[user_sa_id] #  其他基站内被卫星服务的用户的干扰
                     interference += interf
 
                 #interference = 10 ** ((self.Gr_user + Path_loss_matrxi[user_bs_id]) / 10) * interference 
@@ -271,8 +270,7 @@ def calculate_datarate(Action_beam, req_user_info, req_list,bs_lla,bs_state):
     ## 下行传输
     downlink_tool = downlink_transmision_tool()
     Gain_sa_matrix,Path_loss_sa= downlink_tool.get_sa_sinr(Action_beam, req_user_info, req_list) #获得卫星用户的SINR
-    downlink_tool.get_bs_sinr( req_user_info,bs_lla,bs_state,Gain_sa_matrix,Path_loss_sa) #获得基站用户的SINR
-    downlink_tool.get_sa_sinr_TxMax(Action_beam, req_user_info, req_list)
+    downlink_tool.get_bs_sinr( req_user_info,bs_lla,bs_state,Gain_sa_matrix,Path_loss_sa,p_best) #获得基站用户的SINR
     DOWN_Rate = np.log2(1 + downlink_tool.sinr_matrix) * downlink_tool.bw
     MAX_DOWN_Rate = np.log2(1 + downlink_tool.max_sinr_matrix) * downlink_tool.bw
     # print("DOWN_Rate", downlink_tool.sinr_matrix)

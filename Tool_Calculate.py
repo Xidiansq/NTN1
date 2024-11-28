@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Circle
 import Parameters
 import cvxpy as cp
+import warnings
+warnings.filterwarnings("ignore", message="This use of ``*`` has resulted in matrix multiplication.")
 
 
 
@@ -192,7 +194,8 @@ def Power_Allocation(H_gain):
     # 参数设置
     U = H_gain.shape[1]  # 用户数量
     C = H_gain.shape[1]  # 波束数量
-    P = Parameters.Power_BeamMax  # 最大功率 (dBm)
+    p_max = Parameters.Power_BeamMax
+    P = Parameters.Power_SateTotal  # 最大功率 (dBm)
     Max_iter = 50  # 最大迭代次数
     epsilon = 1e-5  # 收敛阈值
     # 初始化变量
@@ -215,7 +218,8 @@ def Power_Allocation(H_gain):
             )
         )
         constraints = [
-            p >= 1,
+            p >= 0,
+            p<=db2pow(p_max),
             cp.sum(p) <= db2pow(P),
         ]
         problem = cp.Problem(cp.Maximize(objective), constraints)
