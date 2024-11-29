@@ -1,0 +1,2 @@
+epoch       	ep_ret      	ep_tx       	newbytes    	ep_delay   	ep_delay_normal   	ep_throu   
+0	31.195049689066984	569780300.8762193	444593635.26715904	0.0	0	543384.8389398758

@@ -14,7 +14,7 @@ class downlink_transmision_tool:
         #用户参数
         self.req_user_num = 0
         self.otheruser_conbeam_num = 0
-        self.Gr_user =  Parameters.Gain_user - 16 #  30 dBi
+        self.Gr_user =  Parameters.Gain_user-16  #  30 dBi
 
         #通信参数
         self.bw = Parameters.bw          #带宽 500e6 HZ

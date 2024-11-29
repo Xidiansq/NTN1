@@ -56,6 +56,8 @@ def get_paper_reward_info(extra,MAX_DOWN_Rate):
 
     # r1 = reward_Qos(Sate_step_Qos, Bs_step_Qos)
     r1 =  0.5 * (sum(Qos_sa)/len(Qos_sa))  +0.5 * (sum(Qos_bs)/len(Qos_bs)) 
+    if  r1>1:
+        print("error")
     print("---------------------------------")
     print("reward",r1)
     print("---------------------------------")
@@ -115,7 +117,7 @@ def capacity_request_ratio(Request,Capacity,MAX_DOWN_Rate):
     """
     if Request==0 : return 0
     if Request!=0 and MAX_DOWN_Rate==0: return 0
-    reward = Capacity/min(Request,MAX_DOWN_Rate) 
+    reward = min(Capacity,Request)/min(Request,MAX_DOWN_Rate) 
     return reward 
 
 if __name__ == '__main__':
