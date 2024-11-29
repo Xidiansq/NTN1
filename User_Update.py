@@ -323,7 +323,7 @@ def update_all_user(userlist, center_sat, cover_ange, bs_xyz,
     req_user_info = last_user_info.iloc[last_request_list, :]
     # 每个小区内用户的服务情况
     #print("req_user_info", req_user_info)
-    bs_if_serv,bs_state = choose_user_bsifservice(len(userlist), last_user_info, 
+    bs_if_serv,bs_state = choose_user_bsifservice(last_user_info, 
                                                   Action_beam)
     DOWN_Rate,MAX_DOWN_Rate= User_Transmission.calculate_datarate(Action_beam, 
                                                           last_user_info, 
@@ -377,7 +377,7 @@ def update_user_traffic_info(userlist):
                                                        'NewData', 'Last_WaitData', 'Total_WaitData', 'Finish_Data', 
                                                        'Time_Delay', 'Down_TxData', 'Down_Throughput'])
     return traffic_info, user_request
-def choose_user_bsifservice(user_num, last_user_info, action_beam):    # TODO:添加函数
+def choose_user_bsifservice(last_user_info, action_beam):    # TODO:添加函数
     '''
     选择用户是否被基站连接进行服务,根据用户优先级判断
     输出:
@@ -385,6 +385,7 @@ def choose_user_bsifservice(user_num, last_user_info, action_beam):    # TODO:�
     served_users:具体每个小区的分配情况
 
     '''
+    user_num=Parameters.user_number
     bs_if_service = [0] * user_num  # 存储用户是否被基站服务
     bs_state=[{
         "user_sa": [],
@@ -392,14 +393,9 @@ def choose_user_bsifservice(user_num, last_user_info, action_beam):    # TODO:�
         "user_unserve": []
     } for _ in range((Parameters.bs_num))] #创建长度为基站数量的列表，用来存放每个基站内用户的服务情况
     # 按QCI优先级对用户排序
-    user_priority = []
-    for i in range(user_num):
-        user_priority.append((i, last_user_info['Dis_Bs'][i]))                             # init和update中的距离变量名不一样
-    user_priority.sort(key=lambda x: x[1])  # 按距离从小到大排序(距离越小优先级越高)
-    
-    
+    user_priority = choose_by_random(last_user_info)
     # 按优先级分配基站资源
-    for user_idx, distance in user_priority:
+    for user_idx, _ in user_priority:
     # for user_idx in range(len(userlist)):
         bs = int(last_user_info['BsID'][user_idx])  # 获取基站id
         if action_beam[user_idx] == 0:  # 只考虑基站服务的用户
@@ -418,3 +414,28 @@ def choose_user_bsifservice(user_num, last_user_info, action_beam):    # TODO:�
             bs_state[bs]['user_sa'].append(user_idx)
     #print("bs_if_service:", bs_if_service)
     return bs_if_service,bs_state
+
+
+
+
+
+
+def choose_by_distance(last_user_info):
+    """
+    按照距离进行排序
+    """
+    user_priority=[]
+    for i in range(Parameters.user_number):
+        user_priority.append((i, last_user_info['Dis_Bs'][i]))                             # init和update中的距离变量名不一样
+    user_priority.sort(key=lambda x: x[1])  # 按距离从小到大排序(距离越小优先级越高)
+    return user_priority
+def choose_by_random():
+    """
+    随机排序
+    """
+    user_priority=[]
+    for i in range(Parameters.user_number):
+        user_priority.append((i,0))    
+    random.shuffle(user_priority)                      
+    return user_priority
+
