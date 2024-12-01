@@ -49,7 +49,7 @@ class Env:
                                   'Req_list':(self.user_number)}
         #self.action_space={'beam_choice':(self.user_number,1)}
         #self.action_space=math.factorial(self.user_number) // (math.factorial(self.beam_open) * math.factorial(self.user_number - self.beam_open))
-        self.action_space = {"action_num":(self.user_number*self.beam_open)}
+        self.action_space = {"action_num":((self.user_number+1)*self.beam_open)}
         #状态参数
         # self.beam_list = list(range(0, len(self.beam), 1))
         self.userlist = 0
@@ -117,7 +117,7 @@ class Env:
         self.request_list = next_request_list
         rrr = ppo_reward.get_paper_reward_info(self.extra_infor,MAX_DOWN_Rate/1000) #mbps 
         _, counts = np.unique(action_beam, return_counts=True)
-        rrr = 0 if np.any(counts > 1) else rrr
+        rrr = 0 if np.any(counts[1::,] > 1)  else rrr
         if epoch>20:
             Tool_Calculate.plot_user_position(S_next["Lat"],S_next["Lon"],S_next["BsIfServ"],DOWN_Rate,MAX_DOWN_Rate,
                                           self.bs_xyz,self.bs_ridth,epoch)

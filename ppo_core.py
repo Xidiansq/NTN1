@@ -78,8 +78,10 @@ class MultiCategoricalActor(Actor):
         inp = torch.cat((obs,req_list), 0 if len(obs.shape) == 1 else 1)
         logits = self.logits_net(inp)
         mask = ~(req_list.bool()).repeat(1, self.beam_open).view(batch_size,self.beam_open,self.user_num)
+        mask_temp = torch.zeros((batch_size,self.beam_open,1),device=device).bool()
+        mask = torch.cat((mask_temp,mask),2)
         # print(f"logits  reshape之前：{logits}")
-        logits = logits.reshape(batch_size,self.beam_open,self.user_num)  # 
+        logits = logits.reshape(batch_size,self.beam_open,self.user_num+1)  # 
         logits = logits.masked_fill_(mask, -np.inf)
 
         # print(f"logits  reshape之后：{logits}")
@@ -181,9 +183,10 @@ class RA_ActorCritic(nn.Module):
             
 
         if self.use_cuda:
-            return a.cpu().flatten().numpy(), v.cpu().numpy(), logp_a.cpu().flatten().numpy()
+            #a-1是为了将动作限制在【-1，User_num】之间
+            return (a-1).cpu().flatten().numpy(), v.cpu().numpy(), logp_a.cpu().flatten().numpy()
         else:
-            return a.flatten().numpy(), v.numpy(), logp_a.flatten().numpy()
+            return (a-1).flatten().numpy(), v.numpy(), logp_a.flatten().numpy()
             
             
             # logits = self.pi._distribution(obs, req_list)  # [batch_size, num_beams]

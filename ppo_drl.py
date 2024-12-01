@@ -312,7 +312,8 @@ def ppo(env_fn, actor_critic=ppo_core.RA_ActorCritic, ac_kwargs=dict(), seed=0,
             ep_delay_normal+=tti_rdelay
             ep_len += 1
             ##########################################################################################
-            buf.store(o, a, v, logp, tti_reward)
+            #a+1是为了将动作限制在【0，User_num+1】之间，为了能够让网络正常更新
+            buf.store(o, a+1, v, logp, tti_reward)
             pbar.update(1)
             o = next_o
             timeout = ep_len == max_ep_len  # 一个episode

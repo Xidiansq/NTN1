@@ -17,8 +17,8 @@ Gain_user = 30 #dBi                         用户接收增益
 movespeed = 1000 #m/s                        用户移动速度
 
 # Traffic参数
-ontime = 8   # 业务持续时间分布的均值
-offtime = 2   # 业务关闭时间分布的均值
+ontime = 7   # 业务持续时间分布的均值
+offtime = 3   # 业务关闭时间分布的均值
 
 
 #卫星参数

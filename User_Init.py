@@ -25,8 +25,9 @@ class user:
         self.earthspheroidtype = {'SPHERE': 0, 'GRS80': 1, 'WGS84': 2}  # 三种地球模型
         self.angle_user2sate = 0 # 用户的仰角
         self.angle_user2bs = 0 # 用户和基站天线中心的夹角
-        self.ontime = 0    # 业务持续时间
-        self.offtime = 0   # 业务关闭时间
+        self.ontime = 0  # 业务持续时间
+        self.offtime_restore = offtime
+        self.offtime = np.random.exponential(offtime)
         self.qci = 0 #业务类型
 
         self.cbrrate = Parameters.cbrrate    # 固定码率0.5Mb, 可修改为可变码率VBR;
@@ -152,9 +153,7 @@ class user:
         tan_angle_user2sate = m.atan(sate2point / user2point)
         angle_user2sate = m.degrees(tan_angle_user2sate)     # 夹角, 度数
         return angle_user2sate
-            
-            
-        return angle
+
     def init_user_traffic(self, ontime, offtime, cbrrate):
         """
         初始化用户业务信息;
@@ -162,8 +161,37 @@ class user:
         (2) 初始化用户的其他业务信息;
         """
         self.generate_traffic_duration(ontime, offtime)
+        self.trafficduration()
         self.generate_traffic_info(cbrrate)
+        
+    def trafficduration(self):
+        type = 'None'
+        if self.offtime > 0:
+            self.offtime -= 1
+            if self.offtime < 0:
+                self.offtime = 0
+                ################
+                traffic_choice = np.random.choice([1, 2, 3])
+                if traffic_choice == 1:
+                    self.ontime = np.random.exponential(self.traffictype['text'])
+                    type = 'text'
+                    self.qci = self.qci_type[type]
+                elif traffic_choice == 2:
+                    self.ontime = np.random.exponential(self.traffictype['voice'])
+                    type = 'voice'
+                    self.qci = self.qci_type[type]
+                else:
+                    self.ontime = np.random.exponential(self.traffictype['video'])
+                    type = 'video'
+                    self.qci = self.qci_type[type]
+        elif self.offtime == 0 and self.ontime > 0:
+            self.ontime -= 1
+            if self.ontime < 0:
+                self.ontime = 0
+                self.offtime = np.random.exponential(self.offtime_restore)
+                self.qci = 0
 
+        return self.ontime
     def generate_traffic_duration(self, init_ontime, init_offtime):
         """
         业务类函数1
