@@ -111,7 +111,7 @@ def get_elevation_angle_geocentric(g, s):
         if m.isnan(elev_angle):
             raise ValueError("acos returned a NaN value")
         return elev_angle
-def plot_user_position(lat,lon,req,DOWN_Rate,MAX_DOWN_Rate,bs_xyz,bs_ridth,epoch):
+def plot_user_position(lat,lon,req,DOWN_Rate,MAX_DOWN_Rate,bs_lla,bs_ridth,epoch):
 
     DOWN_Sinr = np.power(2,DOWN_Rate/Parameters.bw)-1
     MAX_DOWN_Sinr = np.power(2,MAX_DOWN_Rate/Parameters.bw)-1
@@ -163,29 +163,29 @@ def plot_user_position(lat,lon,req,DOWN_Rate,MAX_DOWN_Rate,bs_xyz,bs_ridth,epoch
     )
     for i, user_id in enumerate(user_ids):
         plt.text(lon[i], lat[i], f'{user_id,round(DOWN_Sinr[i],1),round(MAX_DOWN_Sinr[i],1)}', fontsize=9, ha='right', va='bottom', color='black')
-#     for bs in (bs_xyz):
-# # 绘制基站点
-#         station_point = plt.scatter(
-#             bs[1],
-#             bs[2],
-#             c='green',
-#             s=100,
-#             edgecolors='black',
-#             marker='^',
-#             label='BS'
-#         ) if bs[0]==0 else plt.scatter(
-#             bs[1],
-#             bs[2],
-#             c='green',
-#             s=100,
-#             edgecolors='black',
-#             marker='^',
-#         )
-#         # 绘制覆盖范围
-#         coverage_radius_deg = bs_ridth   # 覆盖半径转换为纬度差
-#         circle = Circle((bs[1], bs[2]), coverage_radius_deg,  alpha=0.2,color='green')
-#         plt.gca().add_patch(circle)
-    # 添加图例和标注
+    for bs in (bs_lla):
+# 绘制基站点
+        station_point = plt.scatter(
+            bs[2],
+            bs[1],
+            c='green',
+            s=100,
+            edgecolors='black',
+            marker='^',
+            label='BS'
+        ) if bs[0]==0 else plt.scatter(
+            bs[2],
+            bs[1],
+            c='green',
+            s=100,
+            edgecolors='black',
+            marker='^',
+        )
+        # 绘制覆盖范围
+        # coverage_radius_deg = bs_ridth   # 覆盖半径转换为纬度差
+        # circle = Circle((bs[1], bs[2]), coverage_radius_deg,  alpha=0.2,color='green')
+        # plt.gca().add_patch(circle)
+    #添加图例和标注
     plt.xlabel('Lat', fontsize=12)
     plt.ylabel('Lon', fontsize=12)
     plt.grid(True, linestyle='--', alpha=0.7)

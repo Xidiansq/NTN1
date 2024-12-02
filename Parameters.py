@@ -11,7 +11,7 @@ cbrrate = 5000000
 
 
 #用户参数
-user_number = 20  #                          用户状态
+user_number = 25  #                          用户状态
 user_info_len = 16#                         用户状态长度                          
 Gain_user = 30 #dBi                         用户接收增益
 movespeed = 1000 #m/s                        用户移动速度
@@ -40,6 +40,7 @@ sate_threedB = 3.5  #°                        3dB角
 R_earth = 6371e3 # m                        地球半径
 
 #基站参数
+Bs_high = 30  #                              基站高度
 BS_INT_TH = -123 #dBW                       干扰阈值
 bs_num = 7 #                               基站数量
 Power_bs = 17 #17-22dBW                     基站功率

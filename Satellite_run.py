@@ -120,7 +120,7 @@ class Env:
         rrr = 0 if np.any(counts[1::,] > 1)  else rrr
         if epoch>20:
             Tool_Calculate.plot_user_position(S_next["Lat"],S_next["Lon"],S_next["BsIfServ"],DOWN_Rate,MAX_DOWN_Rate,
-                                          self.bs_xyz,self.bs_ridth,epoch)
+                                          self.bs_lla,self.bs_ridth,epoch)
         done = False
         return S_next, S_Next_to_PPO, self.extra_infor,rrr,done
 
@@ -174,7 +174,7 @@ if __name__ == '__main__':
     np.random.seed(1)
     s0,s0_PPO=env.reset()
     print(s0)
-    action1 = np.array( [11,13,14,16,18,18])
+    action1 = np.array( [13,4,9,16,14,12])
     print("action1",action1)
 
     a,b,c,d,f=env.step(action1,24)

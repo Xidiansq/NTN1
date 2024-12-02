@@ -43,7 +43,7 @@ def setBS(center_longitude,center_latitude, cover_range, num_stations):
         distance = m.hypot(x, y)
         azimuth = (m.degrees(m.atan2(x, y)) + 360) % 360
         lat, lon = vincenty_direct(center_latitude, center_longitude, azimuth, distance, sphType)
-        base_lla.append((lat, lon,0))
+        base_lla.append((lat, lon,Parameters.Bs_high))
         xyz = GeographicToCartesianCoordinates(lat, lon, 0, sphType)
         bs_xyz.append(xyz)
 
