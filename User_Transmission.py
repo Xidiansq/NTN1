@@ -46,9 +46,11 @@ class downlink_transmision_tool:
         #最终输出
         self.sinr_matrix = np.zeros(Parameters.user_number)
         self.max_sinr_matrix = np.zeros(Parameters.user_number)
-        self.Power_Allcation_Sign = True #是否进行功率控制
+        self.Power_Allcation_Sign = Parameters.Power_Allcation_Sign #是否进行功率控制
+        self.Allcation_by_SINR = True
         self.interference_bs2sa = np.zeros((Parameters.bs_num,Parameters.user_number))#基站用户对卫星用户的干扰
         self.factor = np.zeros(Parameters.bs_num)+1 #基站的功率因数
+        self.antenna_req_num = np.zeros((Parameters.user_number))+1
     def get_sa_loss_path(self, req_user_info, req_list):
         """
         计算路径损耗：根据用户和卫星的距离计算
@@ -201,12 +203,12 @@ class downlink_transmision_tool:
         # distance_matrix = np.zeros((self.req_user_num, self.otheruser_conbeam_num))#构造一个距离矩阵，计算每个用户之间的距离
         for this_user_id in range(self.req_user_num ):
             #获取当前用户的位置信息
-            this_user_position=np.radians(np.array([req_user_info.at[this_user_id, 'Lat'], req_user_info.at[this_user_id, 'Lon'], req_user_info.at[this_user_id, 'Alt']]))
+            this_user_position=np.array([req_user_info.at[this_user_id, 'Lat'], req_user_info.at[this_user_id, 'Lon'], req_user_info.at[this_user_id, 'Alt']])
             bs_id=int(req_user_info.at[this_user_id,'BsID'])
-            bsM_position = np.radians(np.array([bs_lla[bs_id][1],bs_lla[bs_id][2],bs_lla[bs_id][3]]))
+            bsM_position = np.array([bs_lla[bs_id][1],bs_lla[bs_id][2],bs_lla[bs_id][3]])
             for other_user_id in range(self.req_user_num ):  # 遍历用户
                 if req_user_info.at[other_user_id,'BsID']==bs_id:
-                    other_user_position = np.radians(np.array([req_user_info.at[other_user_id, 'Lat'], req_user_info.at[other_user_id, 'Lon'], req_user_info.at[other_user_id, 'Alt']]))
+                    other_user_position = np.array([req_user_info.at[other_user_id, 'Lat'], req_user_info.at[other_user_id, 'Lon'], req_user_info.at[other_user_id, 'Alt']])
                     # 计算目标用户和其他用户关于基站之间的夹角
                     angle = Satellite_Bs.angle_between_users(this_user_position,other_user_position,bsM_position)
                     theta_matrix[this_user_id][other_user_id]=angle
@@ -234,35 +236,54 @@ class downlink_transmision_tool:
         Path_loss_matrxi = self.get_bs_loss_path(req_user_info)#计算每个用户的路径损耗
         Diffraction_loss_matrxi = self.get_bs_diffraction_loss(req_user_info)
         self.req_user_num = len(req_user_info)
-        for bs_id,bs_id_state in enumerate(bs_state):          #遍历每个基站                                                        #i 就是代表这个请求用户会被服务，计算这个用户的sinr就行
+        for bs_id,bs_id_state in enumerate(bs_state):          #遍历每个基站                  
+            sinr_bs_temp = np.zeros(self.req_user_num)                                  #此基站范围内的用户信干噪比情况
             user_sa=bs_id_state["user_sa"]                      #当前小区的卫星用户
-            user_bs=bs_id_state["user_bs"]                      #当前小区的基站服务用户
+            user_bs=bs_id_state["user_bs"] if  bs_id_state["choose_by_SINR"] == False else  bs_id_state["user_bs_req"]      #当前小区的基站服务用户
+            antenna_req_num = len(user_bs) if bs_id_state["choose_by_SINR"] == False else min(self.antenna_num,len(user_bs))
+            
             for user_bs_id in user_bs:
+                self.antenna_req_num[user_bs_id] = antenna_req_num
                 interference=0
                 #基站给此用户的增益
                 Gain_self = 10 * np.log10(Gain_matrix[user_bs_id][user_bs_id]) #dBi
                 
                 power_self = 10 ** ((Gain_self + 
-                                     self.Gr_user +       
-                                     Path_loss_matrxi[user_bs_id] + 
-                                     Diffraction_loss_matrxi[user_bs_id]) /10) * (10**(self.Power_bs*self.factor[bs_id]/(10*len(user_bs)))) #W 除以天线的数量 后面需要改
-                for other_user_bs_id in user_bs:
-                    if user_bs_id == other_user_bs_id:  #遍历基站内的其他用户
-                        continue
-                    else:
-                        Gain_interf = 10 * np.log10(Gain_matrix[other_user_bs_id][user_bs_id]) #dBi
-                        interf = 10 ** ((Gain_interf+self.Gr_user + Path_loss_matrxi[user_bs_id]) /10) * (10 ** (self.Power_bs*self.factor[bs_id]/(10*len(user_bs)))) #  其他基站内被基站服务的用户的干扰
-                        interference += interf
+                                    self.Gr_user +       
+                                    Path_loss_matrxi[user_bs_id] + 
+                                    Diffraction_loss_matrxi[user_bs_id]) /10) * (10**(self.Power_bs*self.factor[bs_id]/(10*antenna_req_num))) #W 除以天线的数量 后面需要改
+                # for other_user_bs_id in user_bs: #?基站用户之间的干扰(暂不考虑)
+                #     if user_bs_id == other_user_bs_id:  #遍历基站内的其他用户
+                #         continue
+                #     else:
+                #         Gain_interf = 10 * np.log10(Gain_matrix[other_user_bs_id][user_bs_id]) #dBi
+                #         interf = 10 ** ((Gain_interf+self.Gr_user + Path_loss_matrxi[user_bs_id]) /10) * (10 ** (self.Power_bs*self.factor[bs_id]/(10*len(user_bs)))) #  其他基站内被基站服务的用户的干扰
+                #         interference += interf
                 for user_sa_id in user_sa:
                     Gain_sa_interf = 10 * np.log10(Gain_sa_matrix[user_sa_id][user_bs_id]) #dBi  来自其他基站内卫星用户的增益矩阵
                     interf = 10 ** ((Gain_sa_interf+self.Gr_user + Path_loss_sa[0][user_bs_id]) /10) * self.Beam_Power[user_sa_id] #  其他基站内被卫星服务的用户的干扰
                     interference += interf
-                
-                #interference = 10 ** ((self.Gr_user + Path_loss_matrxi[user_bs_id]) / 10) * interference 
                 sinr = power_self / (self.noisy + interference)
                 max_sinr = power_self / self.noisy
+                sinr_bs_temp[user_bs_id] = sinr
                 self.sinr_matrix[user_bs_id] = sinr
                 self.max_sinr_matrix[user_bs_id] = max_sinr
+
+            if bs_id_state["choose_by_SINR"] == True: # 判断是否按照SINR进行连接分配
+                idx = np.argsort(sinr_bs_temp)[-antenna_req_num:] if antenna_req_num!=0 else []
+                bs_state[bs_id]["user_bs"]=list(idx)
+                bs_state[bs_id]["user_unserve"]=list(np.setdiff1d(bs_state[bs_id]["user_bs_req"], bs_state[bs_id]["user_bs"]))
+                for id in user_bs:
+                    if np.isin(id,idx)==False:
+                        self.sinr_matrix[id] = 0
+                        self.max_sinr_matrix[id] = 0
+                
+
+
+
+
+            
+
 
     def bs2sa_inter(self,bs_state,req_user_info,bs_lla):
         """
@@ -302,8 +323,8 @@ def calculate_datarate(Action_beam, req_user_info, req_list,bs_lla,bs_state):
     
     Gain_sa_matrix,Path_loss_sa= downlink_tool.get_sa_sinr(Action_beam, req_user_info, req_list) #获得卫星用户的SINR
     downlink_tool.get_bs_sinr(req_user_info,bs_lla,bs_state,Gain_sa_matrix,Path_loss_sa) #获得基站用户的SINR
-    DOWN_Rate = np.log2(1 + downlink_tool.sinr_matrix) * downlink_tool.bw
-    MAX_DOWN_Rate = np.log2(1 + downlink_tool.max_sinr_matrix) * downlink_tool.bw
+    DOWN_Rate = np.log2(1 + downlink_tool.sinr_matrix) * downlink_tool.bw/downlink_tool.antenna_req_num
+    MAX_DOWN_Rate = np.log2(1 + downlink_tool.max_sinr_matrix) * downlink_tool.bw/downlink_tool.antenna_req_num
     print("DOWN_Rate", downlink_tool.sinr_matrix)
     print("MAX_DOWN_Rate",downlink_tool.max_sinr_matrix)
     return DOWN_Rate,MAX_DOWN_Rate

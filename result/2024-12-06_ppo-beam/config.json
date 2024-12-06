@@ -1,0 +1,47 @@
+{
+    "ac_kwargs":	{
+        "hidden_sizes":	[
+            256,
+            512,
+            1024,
+            512,
+            256
+        ]
+    },
+    "actor_critic":	"RA_ActorCritic",
+    "clip_ratio":	0.2,
+    "env_fn":	"Satellite_run",
+    "epochs":	1000,
+    "exp_name":	"ppo-beam",
+    "gamma":	0.99,
+    "lam":	0.97,
+    "logger":	{
+        "<spinup.utils.logx.EpochLogger object at 0x000002AA7AFB65E0>":	{
+            "epoch_dict":	{},
+            "exp_name":	"ppo-beam",
+            "first_row":	true,
+            "log_current_row":	{},
+            "log_headers":	[],
+            "output_dir":	"E:\\\u901a\u4fe1\\sq\\NTN/result\\2024-12-06_ppo-beam",
+            "output_file":	{
+                "<_io.TextIOWrapper name='E:\\\\\u901a\u4fe1\\\\sq\\\\NTN/result\\\\2024-12-06_ppo-beam\\\\progress.txt' mode='w' encoding='cp936'>":	{
+                    "mode":	"w"
+                }
+            }
+        }
+    },
+    "logger_kwargs":	{
+        "exp_name":	"ppo-beam",
+        "output_dir":	"E:\\\u901a\u4fe1\\sq\\NTN/result\\2024-12-06_ppo-beam"
+    },
+    "max_ep_len":	50,
+    "pi_lr":	0.0003,
+    "save_freq":	30,
+    "seed":	0,
+    "steps_per_epoch":	50,
+    "target_kl":	0.01,
+    "train_pi_iters":	50,
+    "train_v_iters":	50,
+    "use_cuda":	true,
+    "vf_lr":	0.0001
+}

@@ -1,6 +1,8 @@
 # -*-coding:utf-8-*-
 
-
+#决策参数
+choose_by_SINR = True #按照随机或者距离时置为False，然后在User_Update 的428行进行函数选择
+Power_Allcation_Sign = True
 
 
 #覆盖参数
@@ -11,14 +13,14 @@ cbrrate = 5000000
 
 
 #用户参数
-user_number = 25  #                          用户状态
+user_number = 25 #                          用户状态
 user_info_len = 16#                         用户状态长度                          
 Gain_user = 30 #dBi                         用户接收增益
 movespeed = 1000 #m/s                        用户移动速度
 
 # Traffic参数
-ontime = 7   # 业务持续时间分布的均值
-offtime = 3   # 业务关闭时间分布的均值
+ontime = 9   # 业务持续时间分布的均值
+offtime = 1   # 业务关闭时间分布的均值
 
 
 #卫星参数

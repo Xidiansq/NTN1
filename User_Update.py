@@ -352,13 +352,14 @@ def update_all_user(userlist, center_sat, cover_ange, bs_xyz,
     req_user_info = last_user_info.iloc[last_request_list, :]
     # 每个小区内用户的服务情况
     #print("req_user_info", req_user_info)
-    bs_if_serv,bs_state = choose_user_bsifservice(last_user_info, 
+    bs_state = choose_user_bsifservice(last_user_info, 
                                                   Action_beam)
     DOWN_Rate,MAX_DOWN_Rate= User_Transmission.calculate_datarate(Action_beam, 
                                                           last_user_info, 
                                                           last_request_list,
                                                           bs_lla,
-                                                          bs_state)
+                                                          bs_state) #bs_state
+    bs_if_serv=get_bs_if_service(bs_state)
     for i in range(len(userlist)):
         # print("============================================================更新", i, "============================================================")
         userlist[i] = user_update(center_sat, cover_ange, bs_xyz,ontime, offtime, 
@@ -415,12 +416,15 @@ def choose_user_bsifservice(last_user_info, action_beam):    # TODO:添加函数
 
     '''
     user_num=Parameters.user_number
-    bs_if_service = [0] * user_num  # 存储用户是否被基站服务
+
     bs_state=[{
         "user_sa": [],
         "user_bs": [],
-        "user_unserve": []
+        "user_unserve": [],
+        "user_bs_req":  [],
+        "choose_by_SINR": Parameters.choose_by_SINR
     } for _ in range((Parameters.bs_num))] #创建长度为基站数量的列表，用来存放每个基站内用户的服务情况
+
     # 按QCI优先级对用户排序
     user_priority = choose_by_random()
     # 按优先级分配基站资源
@@ -428,23 +432,34 @@ def choose_user_bsifservice(last_user_info, action_beam):    # TODO:添加函数
     # for user_idx in range(len(userlist)):
         bs = int(last_user_info['BsID'][user_idx])  # 获取基站id
         if action_beam[user_idx] == 0:  # 只考虑基站服务的用户
-            if last_user_info['ReqID'][user_idx] == 1:  # 只有有请求的用户才能被服务               # init和update中的请求变量名不一样
-                if len(bs_state[bs]['user_bs']) <= Parameters.antenna_num:  # 基站还有可用天线
-                    bs_if_service[user_idx] = bs    # 该用户被第bsID个基站服务服务
+            if last_user_info['ReqID'][user_idx] == 1:  # 只有有请求的用户才能被服务 
+                bs_state[bs]["user_bs_req"].append(user_idx)             
+                if len(bs_state[bs]['user_bs']) < Parameters.antenna_num:  # 基站还有可用天线
+# 该用户被第bsID个基站服务服务
                     bs_state[bs]['user_bs'].append(user_idx)
                 else:
-                    bs_if_service[user_idx] = -1    # 基站天线已满, 该用户不服务
+ # 基站天线已满, 该用户不服务
                     bs_state[bs]['user_unserve'].append(user_idx)  # 记录未被服务的用户
             else:
-                bs_if_service[user_idx] = -1  # 无请求用户不服务
+ # 无请求用户不服务
                 bs_state[bs]['user_unserve'].append(user_idx)
         else:
-            bs_if_service[user_idx] = -2    # 该用户被卫星服务
+ # 该用户被卫星服务
             bs_state[bs]['user_sa'].append(user_idx)
     #print("bs_if_service:", bs_if_service)
-    return bs_if_service,bs_state
+    return bs_state
 
 
+def get_bs_if_service(bs_state):
+    bs_if_service=[0]*Parameters.user_number
+    for bs_id,bs_state in enumerate(bs_state):
+        for x in bs_state["user_sa"]:
+            bs_if_service[x]=-2
+        for x in bs_state["user_bs"]:
+            bs_if_service[x]=bs_id
+        for x in bs_state["user_unserve"]:
+            bs_if_service[x]=-1
+    return bs_if_service
 
 
 
@@ -467,4 +482,8 @@ def choose_by_random():
         user_priority.append((i,0))    
     random.shuffle(user_priority)                      
     return user_priority
+
+    
+
+    
 
