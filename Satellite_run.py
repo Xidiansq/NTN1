@@ -115,14 +115,14 @@ class Env:
         S_Next_to_PPO = {'ReqData': self.ReqData.flatten(),"Req_list" : self.mask_req}
         self.last_tti_state = S_next
         self.request_list = next_request_list
-        rrr = ppo_reward.get_paper_reward_info(self.extra_infor,MAX_DOWN_Rate/1000) #mbps 
+        rrr,r_sa,r_bs = ppo_reward.get_paper_reward_info(self.extra_infor,MAX_DOWN_Rate/1000) #mbps 
         _, counts = np.unique(action_beam, return_counts=True)
         rrr = 0 if np.any(counts[1::,] > 1)  else rrr
         if epoch>20:
             Tool_Calculate.plot_user_position(S_next["Lat"],S_next["Lon"],S_next["BsIfServ"],DOWN_Rate,MAX_DOWN_Rate,
                                           self.bs_lla,self.bs_ridth,epoch)
         done = False
-        return S_next, S_Next_to_PPO, self.extra_infor,rrr,done
+        return S_next, S_Next_to_PPO, self.extra_infor,rrr,r_sa,r_bs,done
 
     def build_mask(self,user_num, req_list):
         """

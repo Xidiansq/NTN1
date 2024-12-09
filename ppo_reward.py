@@ -55,13 +55,13 @@ def get_paper_reward_info(extra,MAX_DOWN_Rate):
     Bs_step_ave_downthroughput = Bs_step_downthroughput / len(bs_extra) if len(bs_extra) > 0 else 0
 
     # r1 = reward_Qos(Sate_step_Qos, Bs_step_Qos)
-    r1 =  0.5*(sum(Qos_sa)/len(Qos_sa))  +0.5 * (sum(Qos_bs)/len(Qos_bs)) 
+    r1 =  0.8*(sum(Qos_sa)/len(Qos_sa))  +0.2 * (sum(Qos_bs)/len(Qos_bs)) 
     if  r1>1:
         print("error")
     print("---------------------------------")
     print("reward",r1)
     print("---------------------------------")
-    return r1
+    return r1,(sum(Qos_sa)/len(Qos_sa)),(sum(Qos_bs)/len(Qos_bs))
 
 
 def reward_sa_Qos(angle_Sa2User, distance_bs,Request,Capacity,Maxdis_Bs,MAX_DOWN_Rate):

@@ -278,8 +278,9 @@ def ppo(env_fn, actor_critic=ppo_core.RA_ActorCritic, ac_kwargs=dict(), seed=0,
     # Main loop: collect experience in env and update/log each epoch
     for epoch in range(epochs):#10000轮
         pbar = tqdm(total=local_steps_per_epoch)
-        ep_tx, ep_capacity, ep_ret, ep_len, ep_newbytes ,ep_delay,ep_delay_normal,ep_throu= 0, 0, 0, 0, 0,0,0,0
-        epoch_tx, epoch_waiting, epoch_reward, epoch_newbytes = 0, 0, 0, 0
+        ep_tx_sa,ep_tx_bs = 0,0
+        ep_tx, ep_capacity, ep_ret,ep_ret_sa,ep_ret_bs, ep_len, ep_newbytes ,ep_delay,ep_delay_normal,ep_throu= 0, 0,0,0, 0, 0, 0,0,0,0
+        epoch_tx,epoch_tx_sa,epoch_tx_bs, epoch_waiting, epoch_reward,epoch_reward_sa,epoch_reward_bs, epoch_newbytes = 0,0,0, 0, 0, 0,0,0
         sum_tx = 0
         error = 0
         final_waiting = 0
@@ -292,7 +293,7 @@ def ppo(env_fn, actor_critic=ppo_core.RA_ActorCritic, ac_kwargs=dict(), seed=0,
             a, v, logp = ac.step(obs,mask)
             print("=======================动作a=================\n",a)
             print("action",a)
-            o_info, next_o, extra,reward,done = env.step(a)
+            o_info, next_o, extra,reward,r_sa,r_bs,done = env.step(a)
             print(o_info)
             #####################################获得日志信息######################################
             info_sa,info_bs=get_env_info(extra)
@@ -303,10 +304,14 @@ def ppo(env_fn, actor_critic=ppo_core.RA_ActorCritic, ac_kwargs=dict(), seed=0,
             threa_b = 1
             tti_reward = threa_b*reward + (1-threa_b)*tti_rdelay
             ###########################################################################################
-            ep_tx += info_sa['Down_TxData']#每一个epoch的总传输量
+            ep_tx += info_sa['Down_TxData']+info_bs['Down_TxData']#每一个epoch的总传输量
+            ep_tx_sa += info_sa['Down_TxData']#每一个epoch的总传输量
+            ep_tx_bs += info_bs['Down_TxData']#每一个epoch的总传输量
             ep_newbytes += info_sa['NewData']
             final_waiting += info_sa['Total_WaitData']
             ep_ret += tti_reward
+            ep_ret_sa+= r_sa
+            ep_ret_bs+= r_bs
             ep_throu+=info_sa['Down_Throughput']
             ep_delay+=info_sa['Time_Delay']
             ep_delay_normal+=tti_rdelay
@@ -332,15 +337,23 @@ def ppo(env_fn, actor_critic=ppo_core.RA_ActorCritic, ac_kwargs=dict(), seed=0,
                     v = 0
                 buf.finish_path(v)  # 一个episode
                 epoch_reward += ep_ret
+                epoch_reward_sa += ep_ret_sa
+                epoch_reward_bs += ep_ret_bs
                 epoch_tx += ep_tx
+                epoch_tx_sa += ep_tx_sa
+                epoch_tx_bs += ep_tx_bs
                 epoch_newbytes += ep_newbytes
-                ep_tx, ep_capacity, ep_ret, ep_len, ep_newbytes,  = 0, 0, 0, 0, 0
+                ep_tx,ep_ret_sa,ep_ret_bs,ep_tx_sa,ep_tx_bs ,ep_capacity, ep_ret, ep_len, ep_newbytes,  = 0, 0, 0, 0, 0,0,0,0,0
                 if epoch_ended:
                     # sum_tx = o_satis['total_txdata'].sum()
                     # final_waiting = o_satis['waitingdata'].sum()
                     ep_tx = epoch_tx / int(steps_per_epoch / max_ep_len)
+                    ep_tx_sa = epoch_tx_sa / int(steps_per_epoch / max_ep_len)
+                    ep_tx_bs = epoch_tx_bs / int(steps_per_epoch / max_ep_len)
                     #ep_capacity = epoch_capacity / int(steps_per_epoch / max_ep_len)
                     ep_ret = epoch_reward / int(steps_per_epoch / max_ep_len)
+                    ep_ret_sa = epoch_reward_sa / int(steps_per_epoch / max_ep_len)
+                    ep_ret_bs = epoch_reward_bs / int(steps_per_epoch / max_ep_len)
                     ep_waiting = epoch_waiting / int(steps_per_epoch / max_ep_len)
                     ep_newbytes = epoch_newbytes / int(steps_per_epoch / max_ep_len)
                     if len(y) >= 2:
@@ -367,7 +380,11 @@ def ppo(env_fn, actor_critic=ppo_core.RA_ActorCritic, ac_kwargs=dict(), seed=0,
         print("update time", end_time - start_time)
         logger.log_tabular('epoch       ', epoch)
         logger.log_tabular("ep_ret      ", ep_ret)
+        logger.log_tabular("ep_ret_sa      ", ep_ret_sa)
+        logger.log_tabular("ep_ret_bs      ", ep_ret_bs)
         logger.log_tabular("ep_tx       ", ep_tx)
+        logger.log_tabular("ep_tx_sa       ", ep_tx_sa)
+        logger.log_tabular("ep_tx_bs       ", ep_tx_bs)
         logger.log_tabular("newbytes    ", ep_newbytes)
         logger.log_tabular("ep_delay   ", ep_delay)
         logger.log_tabular("ep_delay_normal   ", ep_delay_normal)
@@ -385,8 +402,8 @@ if __name__ == '__main__':
     logger_kwargs = setup_logger_kwargs("ppo-beam", data_dir=trace_dir, datestamp=True)#时间戳
     ppo(Satellite_run,
         actor_critic=ppo_core.RA_ActorCritic, ac_kwargs={"hidden_sizes": (256, 512,1024, 512, 256)},
-        steps_per_epoch=50, epochs=1000, gamma=0.99, clip_ratio=0.2, pi_lr=3e-4,
-        vf_lr=1e-4, train_pi_iters=50, train_v_iters=50, lam=0.97, max_ep_len=50,
+        steps_per_epoch=50, epochs=1000, gamma=0.99, clip_ratio=0.2, pi_lr=3e-3,
+        vf_lr=1e-3, train_pi_iters=50, train_v_iters=50, lam=0.97, max_ep_len=50,
         logger_kwargs=logger_kwargs, use_cuda=True)
     # ppo(statellite_run,
     #     actor_critic=core_beam.RA_ActorCritic, ac_kwargs={"hidden_sizes": (256, 512, 1024, 512, 256)},
