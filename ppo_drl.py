@@ -293,16 +293,19 @@ def ppo(env_fn, actor_critic=ppo_core.RA_ActorCritic, ac_kwargs=dict(), seed=0,
             a, v, logp = ac.step(obs,mask)
             print("=======================动作a=================\n",a)
             print("action",a)
-            o_info, next_o, extra,reward,r_sa,r_bs,done = env.step(a)
+            o_info, next_o, extra,reward,r_sa,r_bs,reward_array,done = env.step(a)
             print(o_info)
             #####################################获得日志信息######################################
             info_sa,info_bs=get_env_info(extra)
             # 当前的一个obs_tti
             #####################################奖励计算#########################################
              #只计算吞吐量的奖励
+            counts = np.bincount((a+1)) #+1是因为返回的reward_array是有-1的奖励的
+            reward_2= np.array(reward_array)[np.array(a+1)]/counts[np.array(a+1)]
+
             tti_rdelay = 0 #! 暂时没有考虑时延
             threa_b = 1
-            tti_reward = threa_b*reward + (1-threa_b)*tti_rdelay
+            tti_reward = threa_b*np.mean(reward) + (1-threa_b)*tti_rdelay
             ###########################################################################################
             ep_tx += info_sa['Down_TxData']+info_bs['Down_TxData']#每一个epoch的总传输量
             ep_tx_sa += info_sa['Down_TxData']#每一个epoch的总传输量
@@ -402,8 +405,8 @@ if __name__ == '__main__':
     logger_kwargs = setup_logger_kwargs("ppo-beam", data_dir=trace_dir, datestamp=True)#时间戳
     ppo(Satellite_run,
         actor_critic=ppo_core.RA_ActorCritic, ac_kwargs={"hidden_sizes": (256, 512,1024, 512, 256)},
-        steps_per_epoch=50, epochs=1000, gamma=0.99, clip_ratio=0.2, pi_lr=3e-3,
-        vf_lr=1e-3, train_pi_iters=50, train_v_iters=50, lam=0.97, max_ep_len=50,
+        steps_per_epoch=50, epochs=1000, gamma=0.99, clip_ratio=0.2, pi_lr=3e-4,
+        vf_lr=1e-4, train_pi_iters=50, train_v_iters=50, lam=0.97, max_ep_len=50,
         logger_kwargs=logger_kwargs, use_cuda=True)
     # ppo(statellite_run,
     #     actor_critic=core_beam.RA_ActorCritic, ac_kwargs={"hidden_sizes": (256, 512, 1024, 512, 256)},

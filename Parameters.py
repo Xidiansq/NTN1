@@ -2,18 +2,18 @@
 
 #决策参数
 choose_by_SINR = True #按照随机或者距离时置为False，然后在User_Update 的428行进行函数选择
-Power_Allcation_Sign = True
+Power_Allcation_Sign = False
 
 
 #覆盖参数
 center_latitude = 36.0735  #°                中心维度    
 center_longitude = 99.0898 #°               中心经度
-cover_range = 200 * 1000 #m                 卫星覆盖范围
+cover_range = 150 * 1000 #m                 卫星覆盖范围
 cbrrate = 5000000
 
 
 #用户参数
-user_number = 25 #                          用户状态
+user_number = 20 #                          用户状态
 user_info_len = 16#                         用户状态长度                          
 Gain_user = 30 #dBi                         用户接收增益
 movespeed = 1000 #m/s                        用户移动速度
@@ -29,7 +29,7 @@ sate_lla = [37.0, 100.0, 1.13468e+06]      #卫星的经纬度坐标
 #sate_xyz = [-958408, 5.99098e+06, 4.41951e+06]  #卫星的xyz坐标
 sate_xyz = [-1042963.7499107805, 5914941.353389322, 4525987.939609339]
 
-beam_open = 6  #                           波束数量 
+beam_open = 8  #                           波束数量 
 frequency = 2e10  #Hz                       中心频率
 HLeo = 1300 * 1000 #m                        卫星高度
 Power_SateTotal = 30 # 30-35dBW             总功率

@@ -137,7 +137,7 @@ class downlink_transmision_tool:
             self.Beam_Power[self.Beam_Power==1] = Tool_Calculate.Power_Allocation(h_sa) 
         else:
             self.Beam_Power[self.Beam_Power==1] = 10**(self.Power_Beam_average/10)
-        print("self.Beam_Power",self.Beam_Power)
+        # print("self.Beam_Power",self.Beam_Power)
         ##################################################################################
         for i in range(self.req_user_num):
             interference=0
@@ -272,7 +272,8 @@ class downlink_transmision_tool:
             if bs_id_state["choose_by_SINR"] == True: # 判断是否按照SINR进行连接分配
                 idx = np.argsort(sinr_bs_temp)[-antenna_req_num:] if antenna_req_num!=0 else []
                 bs_state[bs_id]["user_bs"]=list(idx)
-                bs_state[bs_id]["user_unserve"]=list(np.setdiff1d(bs_state[bs_id]["user_bs_req"], bs_state[bs_id]["user_bs"]))
+                temp = list(set(bs_state[bs_id]["user_unserve"]) | set(bs_state[bs_id]["user_bs_req"]))
+                bs_state[bs_id]["user_unserve"]=list(set(np.setdiff1d(temp, bs_state[bs_id]["user_bs"])))
                 for id in user_bs:
                     if np.isin(id,idx)==False:
                         self.sinr_matrix[id] = 0
@@ -319,15 +320,17 @@ def calculate_datarate(Action_beam, req_user_info, req_list,bs_lla,bs_state):
     downlink_tool = downlink_transmision_tool()
     downlink_tool.bs2sa_inter(bs_state,req_user_info,bs_lla) #计算基站-卫星干扰
     downlink_tool.caculate_bs_power_factor()# 进行基站功率控制
-    print("factor",downlink_tool.factor)
+    # print("factor",downlink_tool.factor)
     
     Gain_sa_matrix,Path_loss_sa= downlink_tool.get_sa_sinr(Action_beam, req_user_info, req_list) #获得卫星用户的SINR
     downlink_tool.get_bs_sinr(req_user_info,bs_lla,bs_state,Gain_sa_matrix,Path_loss_sa) #获得基站用户的SINR
     DOWN_Rate = np.log2(1 + downlink_tool.sinr_matrix) * downlink_tool.bw/downlink_tool.antenna_req_num
     MAX_DOWN_Rate = np.log2(1 + downlink_tool.max_sinr_matrix) * downlink_tool.bw/downlink_tool.antenna_req_num
-    print("DOWN_Rate", downlink_tool.sinr_matrix)
-    print("MAX_DOWN_Rate",downlink_tool.max_sinr_matrix)
+    # print("DOWN_Rate", downlink_tool.sinr_matrix)
+    # print("MAX_DOWN_Rate",downlink_tool.max_sinr_matrix)
     return DOWN_Rate,MAX_DOWN_Rate
+
+    
 
 
 

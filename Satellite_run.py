@@ -115,14 +115,14 @@ class Env:
         S_Next_to_PPO = {'ReqData': self.ReqData.flatten(),"Req_list" : self.mask_req}
         self.last_tti_state = S_next
         self.request_list = next_request_list
-        rrr,r_sa,r_bs = ppo_reward.get_paper_reward_info(self.extra_infor,MAX_DOWN_Rate/1000) #mbps 
-        _, counts = np.unique(action_beam, return_counts=True)
-        rrr = 0 if np.any(counts[1::,] > 1)  else rrr
+        rrr,r_sa,r_bs,reward_array = ppo_reward.get_paper_reward_info(self.extra_infor,MAX_DOWN_Rate/1000) #mbps 
+        # x, counts = np.unique(action_beam, return_counts=True)
+        # rrr = 0 if np.any(counts[1::,] > 1)  else rrr
         if epoch>20:
             Tool_Calculate.plot_user_position(S_next["Lat"],S_next["Lon"],S_next["BsIfServ"],DOWN_Rate,MAX_DOWN_Rate,
                                           self.bs_lla,self.bs_ridth,epoch)
         done = False
-        return S_next, S_Next_to_PPO, self.extra_infor,rrr,r_sa,r_bs,done
+        return S_next, S_Next_to_PPO, self.extra_infor,rrr,r_sa,r_bs,reward_array,done
 
     def build_mask(self,user_num, req_list):
         """
@@ -174,24 +174,24 @@ if __name__ == '__main__':
     np.random.seed(1)
     s0,s0_PPO=env.reset()
     print(s0)
-    action1 = np.array( [13,4,9,16,14,12])
+    action1 = np.array( [4,5,6,2,13,16,38,39,40,41])
     print("action1",action1)
 
-    a,b,c,d,f=env.step(action1,24)
+    a,b,c,d,e,f,g=env.step(action1,24)
     print("info",a)
 
-    action2 = np.array( [19,11,16,18,3,1])
+    action2 = np.array( [33,22,21,46,39,4,48,9,49,42])
     print("action2",action2)
 
-    a,b,c,d,f=env.step(action2,25)
+    a,b,c,d,e,f,g=env.step(action2,25)
     print("info",a)
 
     action3 = np.array( [11,13,14,16,18,19])
     print("action3",action3)
-    a,b,c,d,f=env.step(action3,24)
+    a,b,c,d,e,f,g=env.step(action3,24)
     print("info",a)
 
     action4 = np.array( [11,13,14,16,18,19])
     print("action4",action4)
-    a,b,c,d,f=env.step(action4,24)
+    a,b,c,d,e,f,g=env.step(action4,24)
  

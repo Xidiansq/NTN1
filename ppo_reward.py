@@ -12,18 +12,28 @@ def get_paper_reward_info(extra,MAX_DOWN_Rate):
     #input()
     Sate_step_Qos, Sate_step_new, Sate_step_wait, Sate_step_downtx, Sate_step_downthroughput,  = 0, 0, 0, 0, 0
     Bs_step_Qos, Bs_step_new, Bs_step_wait, Bs_step_downtx, Bs_step_downthroughput = 0, 0, 0, 0, 0
+    Max_sa,Max_bs=0,0
     sate_extra = extra['Sate_User']
     bs_extra = extra['Bs_User']
     if sate_extra==[]: return 1
     Maxdis_Bs = max(max(item["Dis_Bs"] for item in sate_extra), max(item["Dis_Bs"] for item in bs_extra))
     Qos_sa=[]
     Qos_bs=[]
+    reward_array=[0]*(Parameters.user_number+1)
     for Sate_user in sate_extra:
         Sate_step_new += Sate_user["NewData"]        #该时刻新到的数据
-        Sate_step_wait += Sate_user["Total_WaitData"]#所有等待的数据
+        Sate_step_wait += Sate_user["Last_WaitData"]#所有等待的数据
         Sate_step_downtx +=Sate_user["Down_TxData"]  #该时刻传输的数据
         Sate_step_downthroughput += Sate_user["Down_Throughput"] #该时刻的下行吞吐量
+        Max_sa+= MAX_DOWN_Rate[int(Sate_user["UserID"])]
         Qos_sa.append(reward_sa_Qos(Sate_user["Angle"],          #卫星仰角
+                                    Sate_user["Dis_Bs"],         #到基站的距离
+                                    Sate_user["Last_WaitData"], #所有等待的数据
+                                    Sate_user["Down_TxData"],
+                                    Maxdis_Bs,
+                                    MAX_DOWN_Rate[int(Sate_user["UserID"])])    #该时刻传输的数据
+                                    )
+        reward_array[int(Sate_user["UserID"]+1)]=(reward_sa_Qos(Sate_user["Angle"],          #卫星仰角
                                     Sate_user["Dis_Bs"],         #到基站的距离
                                     Sate_user["Last_WaitData"], #所有等待的数据
                                     Sate_user["Down_TxData"],
@@ -34,11 +44,16 @@ def get_paper_reward_info(extra,MAX_DOWN_Rate):
 
     for Bs_User in bs_extra:
         Bs_step_new += Bs_User["NewData"]        #该时刻新到的数据
-        Bs_step_wait += Bs_User["Total_WaitData"]#所有等待的数据
+        Bs_step_wait += Bs_User["Last_WaitData"]#所有等待的数据
         Bs_step_downtx +=Bs_User["Down_TxData"]  #该时刻传输的数据
         Bs_step_downthroughput += Bs_User["Down_Throughput"] #该时刻的下行吞吐量
-        Qos_bs.append(reward_bs_Qos(Bs_User["Total_WaitData"],
-                                    Bs_User["Down_TxData"],
+        Max_bs+= MAX_DOWN_Rate[int(Bs_User["UserID"])]
+        Qos_bs.append(reward_bs_Qos(Bs_User["Last_WaitData"],
+                                    Bs_User["Down_TxData"] ,
+                                    MAX_DOWN_Rate[int(Bs_User["UserID"])])
+                                    )
+        reward_array[int(Bs_User["UserID"]+1)]=(reward_bs_Qos(Bs_User["Last_WaitData"],
+                                    Bs_User["Down_TxData"] ,
                                     MAX_DOWN_Rate[int(Bs_User["UserID"])])
                                     )
 
@@ -55,13 +70,14 @@ def get_paper_reward_info(extra,MAX_DOWN_Rate):
     Bs_step_ave_downthroughput = Bs_step_downthroughput / len(bs_extra) if len(bs_extra) > 0 else 0
 
     # r1 = reward_Qos(Sate_step_Qos, Bs_step_Qos)
-    r1 =  0.8*(sum(Qos_sa)/len(Qos_sa))  +0.2 * (sum(Qos_bs)/len(Qos_bs)) 
+    r1 =  1*(sum(Qos_sa)/len(Qos_sa))  +0 * (sum(Qos_bs)/len(Qos_bs)) 
     if  r1>1:
         print("error")
     print("---------------------------------")
-    print("reward",r1)
+    print("reward",Qos_sa)
+    print((sum(Qos_sa)/len(Qos_sa)))
     print("---------------------------------")
-    return r1,(sum(Qos_sa)/len(Qos_sa)),(sum(Qos_bs)/len(Qos_bs))
+    return r1,(sum(Qos_sa)/len(Qos_sa)) ,(sum(Qos_bs)/len(Qos_bs)),reward_array
 
 
 def reward_sa_Qos(angle_Sa2User, distance_bs,Request,Capacity,Maxdis_Bs,MAX_DOWN_Rate):
