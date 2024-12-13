@@ -173,7 +173,7 @@ class RA_ActorCritic(nn.Module):
 
         with torch.no_grad():
             pi = self.pi._distribution(obs, req_list)
-            # print("概率值：",pi.probs)
+            print("概率值：",pi.probs)
             a = pi.sample()
             logp_a = self.pi._log_prob_from_distribution(pi, a)
             # input()

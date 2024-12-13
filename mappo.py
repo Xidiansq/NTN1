@@ -227,9 +227,9 @@ class ppo():
 
     # Set up function for computing value loss
     def compute_loss_v(self,data):
-        obs, deque, ret = data['obs'].float(), data['mask'].float(), data['ret'].float()
+        obs, deque, ret,act= data['obs'].float(), data['mask'].float(), data['ret'].float(),data['act']
         if self.use_cuda:
-            obs, deque, ret = obs.cuda(), deque.cuda(),ret.cuda()
+            obs, deque, ret ,act= obs.cuda(), deque.cuda(),ret.cuda(),act.cuda()
         inp = torch.cat((obs, deque), dim=1)
         return ((self.ac.v(inp) - ret) ** 2).mean()
 
@@ -350,11 +350,11 @@ if __name__ == '__main__':
             #####################################奖励计算#########################################
              #只计算吞吐量的奖励
             counts = np.bincount((a_all_agent+1)) #+1是因为返回的reward_array是有-1的奖励的
-            reward_agent= np.array(reward_array)[np.array(a_all_agent+1)]/counts[np.array(a_all_agent+1)]
+            reward_agent= np.array(reward_array)[np.array(a_all_agent+1)]#/counts[np.array(a_all_agent+1)]
 
             tti_rdelay = 0 #! 暂时没有考虑时延
             threa_b = 1
-            tti_reward = threa_b*reward + (1-threa_b)*tti_rdelay
+            tti_reward = threa_b*np.mean(reward_agent) + (1-threa_b)*tti_rdelay
             ###########################################################################################
             ep_tx += info_sa['Down_TxData']+info_bs['Down_TxData']#每一个epoch的总传输量
             ep_tx_sa += info_sa['Down_TxData']#每一个epoch的总传输量

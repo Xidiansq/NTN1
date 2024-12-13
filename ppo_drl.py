@@ -305,7 +305,8 @@ def ppo(env_fn, actor_critic=ppo_core.RA_ActorCritic, ac_kwargs=dict(), seed=0,
 
             tti_rdelay = 0 #! 暂时没有考虑时延
             threa_b = 1
-            tti_reward = threa_b*np.mean(reward) + (1-threa_b)*tti_rdelay
+            tti_reward = threa_b*reward+ (1-threa_b)*tti_rdelay
+            print("tti_reward",tti_reward)
             ###########################################################################################
             ep_tx += info_sa['Down_TxData']+info_bs['Down_TxData']#每一个epoch的总传输量
             ep_tx_sa += info_sa['Down_TxData']#每一个epoch的总传输量

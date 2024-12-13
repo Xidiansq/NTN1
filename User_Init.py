@@ -13,7 +13,7 @@ import Parameters
 
 
 class user:
-    def __init__(self, center_sat, cover_range, bs_list, sate_xyz,sate_lla, ontime, offtime):
+    def __init__(self, center_sat, cover_range, bs_list, sate_xyz,sate_lla, ontime, offtime,ue_xyz,ue_lla, index):
         self.center_sat = center_sat #用户区域中心，用于设置用户分布[33.935, 108.445]
         self.cover_range = cover_range #距离用户区域中心的最大距离， 用于设置用户分布 500 *1000 m
 
@@ -44,63 +44,23 @@ class user:
         self.Action_Computation = []
         self.Action_Communication = []
 
-        self.init_user_position(self.center_sat, self.cover_range, self.bs_list, self.sate_lla)#初始化用户的位置
+        self.init_user_position(self.center_sat, self.cover_range, self.bs_list, self.sate_lla,ue_xyz,ue_lla, index)#初始化用户的位置
         self.bs_if_serv = 0 # TODO:添加了bs_if_serv
         self.init_user_traffic(ontime, offtime, self.cbrrate)    # 初始化用户业务类信息
 
 
-    def init_user_position(self, center, maxdistance, bs_list, sate_lla):
+    def init_user_position(self, center, maxdistance, bs_list, sate_lla,ue_xyz,ue_lla, index):
         """
         初始化用户位置类信息:
         (1) 初始化用户位置, 返回用户位置[x, y, z]和[lat, lon, alt];
         (2) 根据用户位置，计算用户所属基站的范围;
         (3) 根据用户位置与卫星位置, 计算用户仰角;
         """
-        self.ue_xyz, self.ue_lat_lon_alt = self.generate_position(center, maxdistance)
+        self.ue_xyz, self.ue_lat_lon_alt = ue_xyz[index], ue_lla[index]
         self.bs_of_ID, self.bs_of_xyz, self.distance_ue2bs = self.generate_connected_bs(self.ue_xyz, bs_list)
         #self.angle_user2sate = self.generate_angele(sate_lla, self.ue_xyz)
         self.angle_user2sate = Tool_Calculate.get_elevation_angle_geocentric(self.ue_xyz,Parameters.sate_xyz)
         
-
-    def generate_position(self, center, maxdistance):
-        """
-        位置类函数1
-        初始化用户位置, 方法: 以region_center为用户区域中心, 随机在maxdistance范围内产生经纬度坐标;
-        输入参数: 用户区域中心位置, [lat, lon, alt]; 用户区域半径, maxdistance;
-        返回: 用户位置, [x, y, z]和[lat, lon, alt];
-        """
-        originlatitude, originlongitude, maxaltitude = center[0], center[1], center[2]
-        # 除去南北极
-        if originlatitude >= 90:
-            originlatitude = 89.999
-        elif originlatitude <= -90:
-            originlatitude = -89.999
-        if maxaltitude < 0:
-            maxaltitude = 0
-        originlatituderadians = originlatitude * (np.pi / 180)
-        originlongituderadians = originlongitude * (np.pi / 180)
-        origincolatitude = (np.pi / 2) - originlatituderadians
-        a = 0.99 * maxdistance / self.earth_radius    # 圆心角弧度数的最大值
-        if a > np.pi:
-            a = np.pi
-        d = np.random.uniform(0, self.earth_radius - self.earth_radius * np.cos(a))
-        phi = np.random.uniform(0, np.pi * 2)
-        alpha = m.acos((self.earth_radius - d) / self.earth_radius)
-        theta = np.pi / 2 - alpha
-        randpointlatitude = m.asin(m.sin(theta) * m.cos(origincolatitude) + m.cos(theta) * m.sin(origincolatitude) * m.sin(phi))
-        intermedlong = m.asin((m.sin(randpointlatitude) * m.cos(origincolatitude) - m.sin(theta)) / (m.cos(randpointlatitude) * m.sin(origincolatitude)))
-        intermedlong = intermedlong + np.pi / 2
-        if phi > (np.pi / 2) and phi <= ((3 * np.pi) / 2):
-            intermedlong = -intermedlong
-        randpointlongtude = intermedlong + originlongituderadians
-        randaltitude = np.random.uniform(0, maxaltitude)
-        ue_lat = randpointlatitude * (180 / np.pi)      # 用户坐标, 纬度
-        ue_lon = randpointlongtude * (180 / np.pi)      # 用户坐标, 经度
-        ue_alt = randaltitude                           # 用户坐标, 海拔
-        self.ue_xyz = Tool_Calculate.GeographicToCartesianCoordinates(ue_lat, ue_lon, ue_alt, self.earthspheroidtype['GRS80'])   # 用户位置, [x, y, z]
-        self.ue_lat_lon_alt = [ue_lat, ue_lon, ue_alt]                                                                             # 用户位置, [lat, lon, alt]
-        center_xyz = Tool_Calculate.GeographicToCartesianCoordinates(center[0], center[1], center[2], self.earthspheroidtype['GRS80'])
-        return self.ue_xyz, self.ue_lat_lon_alt
     
 
     def generate_connected_bs(self, ue_position, all_bs):
@@ -256,7 +216,7 @@ class user:
 #以上为user类，都是类内函数
 #以上为user类，都是类内函数
 #以上为user类，都是类内函数
-def initial_userAll(center_sat,cover_range, bs_list, user_num, sate_xyz, sate_lla, ontime, offtime):
+def initial_userAll(center_sat,cover_range, bs_list, user_num, sate_xyz, sate_lla, ontime, offtime, ue_xyz, ue_lla):
     """
     初始化用户，包含用户数量、用户的位置
     输入参数：
@@ -271,7 +231,7 @@ def initial_userAll(center_sat,cover_range, bs_list, user_num, sate_xyz, sate_ll
     返回：
     user_list:用户列表
     """
-    userlist = [user(center_sat,cover_range,bs_list, sate_xyz, sate_lla, ontime, offtime) for i in range(user_num)]
+    userlist = [user(center_sat,cover_range,bs_list, sate_xyz, sate_lla, ontime, offtime,ue_xyz,ue_lla, i) for i in range(user_num)]
     return userlist
 
 def initial_userTask_info(userlist):

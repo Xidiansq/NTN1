@@ -325,7 +325,6 @@ class user_update:
         self.curr_Downlink_Throughput = ((self.curr_Down_TxData/0.001))/(1024**2)   # 当前的下行瞬时吞吐, 单位Mbps, 更新self.curr_Downlink_Throughput
     
 
-
 def update_all_user(userlist, center_sat, cover_ange, bs_xyz,
                     last_user_info, last_user_task, last_request_list,
                     Action_beam,Action_bs,ontime, offtime,bs_lla):

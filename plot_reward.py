@@ -37,9 +37,9 @@ def exponential_smoothing(rewards, alpha):
 # file1 = '/home/fly/lsy/BC_ppo/非均匀/ppo-con/状态改变/4-6-bc/result/2023-07-22_ppo-ra/progress.txt'
 # file1 = '/home/fly/lsy/BC_ppo/非均匀/ppo-con/状态改变/4-6-bc/result/2023-08-01_ppo-ra/progress.txt'#加PPO的结果
 # file1 = '/home/fly/lsy/BC_ppo/非均匀/ppo-con/状态改变/4-6-bc/result/2023-09-22_ppo-ra/progress.txt'
-file1 = './result/2024-12-11_mappo-beam/progress.txt'
+file1 = './result/2024-12-13_ppo-beam/progress.txt'
 # file2 = '/home/fly/lsy/ppo-loop-ra/thoughtout/4-6/result/2023-05-08_ppo-ra/progress.txt'
-file2 = './result/2024-12-11_mappo-beam/progress.txt'
+file2 = './result/2024-12-13_ppo-beam/progress.txt'
 # file3 = '/home/fly/lsy/BC_ppo/非均匀/old提高基线业务2）/4-6/result/2023-05-03_ppo-ra/progress.txt'
 file3 = '/home/fly/lsy/BC_ppo/非均匀/old提高基线业务2）/4-6/result/2023-08-01_ppo-ra/progress.txt'
 # file4 = '/home/fly/lsy/BC_ppo/非均匀/ppo-con/状态改变/4-6/result/2023-07-25_ppo-ra/progress.txt'
@@ -112,7 +112,7 @@ ax.xaxis.set_major_locator(x_major_locator)
 # #把x轴的主刻度设置为1的倍数
 # ax.yaxis.set_major_locator(y_major_locator)
 # #把y轴的主刻度设置为10的倍数
-plt.xlim(0,100)
+plt.xlim(0,1000)
 
 #  # 插入小窗口
 # axins = inset_axes(ax, width="20%", height="25%", loc='lower left',
@@ -218,7 +218,7 @@ ax.xaxis.set_major_locator(x_major_locator)
 # #把x轴的主刻度设置为1的倍数
 # ax.yaxis.set_major_locator(y_major_locator)
 # #把y轴的主刻度设置为10的倍数
-plt.xlim(0,100)
+plt.xlim(0,1000)
 plt.savefig("./jpg/tx.jpg", dpi=600, bbox_inches='tight')
 plt.show()
 plt.close()
