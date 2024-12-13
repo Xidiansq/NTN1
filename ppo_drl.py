@@ -403,7 +403,7 @@ if __name__ == '__main__':
     import os
 
     trace_dir = os.getcwd() + "/result"
-    logger_kwargs = setup_logger_kwargs("ppo-beam", data_dir=trace_dir, datestamp=True)#时间戳
+    logger_kwargs = setup_logger_kwargs("ppo-beam-pc", data_dir=trace_dir, datestamp=True)#时间戳
     ppo(Satellite_run,
         actor_critic=ppo_core.RA_ActorCritic, ac_kwargs={"hidden_sizes": (256, 512,1024, 512, 256)},
         steps_per_epoch=50, epochs=1000, gamma=0.99, clip_ratio=0.2, pi_lr=3e-4,

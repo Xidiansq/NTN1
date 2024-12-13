@@ -17,6 +17,7 @@ def get_paper_reward_info(extra,MAX_DOWN_Rate):
     bs_extra = extra['Bs_User']
     if sate_extra==[]: return 1
     Maxdis_Bs = max(max(item["Dis_Bs"] for item in sate_extra), max(item["Dis_Bs"] for item in bs_extra))
+    req_num = sum(item["ReqID"] for item in extra['Sate_User'])+sum(item["ReqID"] for item in extra['Bs_User'])
     Qos_sa=[]
     Qos_bs=[]
     reward_array=[0]*(Parameters.user_number+1)
@@ -70,12 +71,12 @@ def get_paper_reward_info(extra,MAX_DOWN_Rate):
     Bs_step_ave_downthroughput = Bs_step_downthroughput / len(bs_extra) if len(bs_extra) > 0 else 0
 
     # r1 = reward_Qos(Sate_step_Qos, Bs_step_Qos)
-    r1 =  1*(sum(Qos_sa)/len(Qos_sa))  +0 * (sum(Qos_bs)/len(Qos_bs)) 
+    r1 =  1*(sum(Qos_sa)/min(Parameters.beam_open,req_num))  +0 * (sum(Qos_bs)/len(Qos_bs)) 
     if  r1>1:
         print("error")
     print("---------------------------------")
     print("reward",Qos_sa)
-    print((sum(Qos_sa)/len(Qos_sa)))
+    print(r1)
     print("---------------------------------")
     return r1,(sum(Qos_sa)/len(Qos_sa)) ,(sum(Qos_bs)/len(Qos_bs)),reward_array
 

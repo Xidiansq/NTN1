@@ -2,14 +2,14 @@
 
 #决策参数
 choose_by_SINR = True #按照随机或者距离时置为False，然后在User_Update 的428行进行函数选择
-Power_Allcation_Sign = False
+Power_Allcation_Sign = True
 
 
 #覆盖参数
 center_latitude = 36.0735  #°                中心维度    
 center_longitude = 99.0898 #°               中心经度
 cover_range = 150 * 1000 #m                 卫星覆盖范围
-cbrrate = 5000000
+cbrrate = 2000000
 
 
 #用户参数
